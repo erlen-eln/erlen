@@ -7,7 +7,7 @@
 目指しているのは「**作って push するだけ**」です。テストもzipもリリースノートも機械が作るので、
 人の手が要るのは「何を直すか」と「いつ版を上げるか」の2つだけになります。
 
-- 公開先: <https://github.com/erlen-eln/erlen>（Org `erlen-eln` / リポジトリ `erlen`）
+- 公開先: <https://github.com/erlen-eln/erlen>（Org `erlen-eln` / リポジトリ `erlen`）（**2026-08-24 公開済み**。履歴は新しい初期コミットからの再出発＝旧履歴と個人メールアドレスは持ち込んでいない。公開前までの全開発履歴はローカルの `history-private` ブランチにある）
 - ライセンス: Apache License 2.0
 - 安定版の基点: **v1.3.0**
 
