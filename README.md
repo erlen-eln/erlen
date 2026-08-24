@@ -143,7 +143,7 @@ node scripts/package.mjs     # 配布zipを作る（テストが緑のときだ�
 ### ライセンス
 
 - **本体は Apache License 2.0** です。全文は [LICENSE](LICENSE)、帰属表記は [NOTICE](NOTICE) にあります。
-  Copyright 2026 Gakushi Kobayashi
+  Copyright 2026 Satoshi Kobayashi
 - 同梱している**構造式エディタ Ketcher は EPAM Systems 製で Apache License 2.0** です
   （`public/ketcher/` 以下。全文は `public/ketcher/LICENSE`、上流の帰属表記は `public/ketcher/NOTICE`。
   バンドルに含まれる各OSSの表記は `public/ketcher/static/js/*.LICENSE.txt`）
@@ -174,7 +174,7 @@ node scripts/package.mjs     # 配布zipを作る（テストが緑のときだ�
 
 ### 責任者
 
-**Gakushi Kobayashi（小林 学史）**
+**Satoshi Kobayashi（小林 学史）**
 
 ---
 
@@ -268,7 +268,7 @@ vulnerabilities and [ROADMAP.md](ROADMAP.md) for what is being considered next.
 ### License
 
 - **Erlen is licensed under the Apache License, Version 2.0.** Full text in [LICENSE](LICENSE),
-  attributions in [NOTICE](NOTICE). Copyright 2026 Gakushi Kobayashi
+  attributions in [NOTICE](NOTICE). Copyright 2026 Satoshi Kobayashi
 - **Ketcher** (structure editor, by EPAM Systems) is bundled under the Apache License 2.0 —
   see `public/ketcher/LICENSE` and `public/ketcher/NOTICE`, plus
   `public/ketcher/static/js/*.LICENSE.txt` for the libraries inside its bundle
@@ -300,4 +300,4 @@ grade and supplier. **Always confirm against the SDS / CoA before using them in 
 
 ### Maintainer
 
-**Gakushi Kobayashi**
+**Satoshi Kobayashi**

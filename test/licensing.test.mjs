@@ -24,12 +24,12 @@ test('ルートに Apache-2.0 の全文がある（LICENSE）', () => {
   assert.match(text, /TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION/);
   // 付録の雛形（Copyright [yyyy] [name of copyright owner]）を埋め忘れていないこと
   assert.ok(!text.includes('[name of copyright owner]'), 'LICENSEの著作権者が雛形のまま');
-  assert.match(text, /Copyright 2026 Gakushi Kobayashi/, '著作権者の表記が無い');
+  assert.match(text, /Copyright 2026 Satoshi Kobayashi/, '著作権者の表記が無い');
 });
 
 test('ルートに NOTICE があり、同梱物の帰属が書いてある', () => {
   const notice = read('NOTICE');
-  assert.match(notice, /Copyright 2026 Gakushi Kobayashi/, 'Erlen本体の著作権表示が無い');
+  assert.match(notice, /Copyright 2026 Satoshi Kobayashi/, 'Erlen本体の著作権表示が無い');
   assert.match(notice, /Apache License, Version 2\.0/, '本体のライセンス名が無い');
   // 同梱している第三者OSSの帰属（消すとライセンス違反になる）
   assert.match(notice, /Ketcher/, 'Ketcherの帰属が無い');
@@ -46,7 +46,7 @@ test('READMEにライセンス節と免責・私的プロジェクトの定型�
   assert.match(readme, /Apache License 2\.0|Apache-2\.0/, 'READMEにライセンス名が無い');
   assert.match(readme, /所属組織とは無関係です/, 'READMEに私的プロジェクトの定型文（日）が無い');
   assert.match(readme, /not affiliated with any organization/, 'READMEに私的プロジェクトの定型文（英）が無い');
-  assert.match(readme, /Gakushi Kobayashi/, 'READMEに責任者の表記が無い');
+  assert.match(readme, /Satoshi Kobayashi/, 'READMEに責任者の表記が無い');
   // 旧EULAへの参照が残っていないこと（Apache-2.0と真正面から矛盾する）
   assert.ok(!/EULA/.test(readme), 'READMEにEULAへの参照が残っている');
 });

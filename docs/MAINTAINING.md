@@ -323,7 +323,7 @@ git clone --mirror . ../erlen-backup-before-rewrite.git
 
 ```text
 # ../erlen-mailmap.txt  ← リポジトリの外。使い終わったら消す
-Gakushi Kobayashi <新しいnoreplyアドレス> <いまの個人アドレス>
+Satoshi Kobayashi <新しいnoreplyアドレス> <いまの個人アドレス>
 ```
 
 ```bash
@@ -358,7 +358,7 @@ git filter-repo --email-callback '
 このリポジトリだけに効く設定にしておくと、他のプロジェクトに影響しません。
 
 ```bash
-git config user.name "Gakushi Kobayashi"
+git config user.name "Satoshi Kobayashi"
 git config user.email "<数字ID>+<GitHubユーザー名>@users.noreply.github.com"
 git config user.email        # 確認
 ```
