@@ -1,0 +1,24 @@
+{
+  // 画面（web/）だけの型設定。バックエンド（src/*.mjs）は素のJavaScriptなので対象外。
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "useDefineForClassFields": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    // 相対importに .ts / .tsx を書く方式。
+    // こうしておくと web/src/calc/*.ts を Node の型ストリップでそのまま読める
+    // （test/reaction-calc.test.mjs が計算ロジックをビルド無しで検証している）
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

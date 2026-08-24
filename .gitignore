@@ -1,0 +1,7 @@
+.env
+.dev.vars
+.wrangler/
+node_modules/
+backups/
+logs/
+dist-zip/

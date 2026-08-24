@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ja" data-guide="update">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f7">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Erlenの新しい版が届いたときに、AIへ依頼して安全に更新を適用するためのガイドと変更履歴。">
+  <title>更新の適用ガイド | Erlen</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #f4f6f7;
+      --surface: #ffffff;
+      --surface-muted: #eef1f3;
+      --ink: #16191c;
+      --dim: #545c65;
+      --note: #7a838d;
+      --line: #dee3e7;
+      --line-strong: #c8d0d6;
+      --accent: #0f7a6c;
+      --accent-soft: #e4f2ef;
+      --amber: #b4600c;
+      --amber-soft: #fbf0e2;
+      --red: #b3352c;
+      --red-soft: #fbeceb;
+      --shadow: 0 18px 44px rgb(20 32 36 / 8%);
+      --sans: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+    button, input { font: inherit; }
+    a { color: inherit; text-underline-offset: 0.18em; }
+    a:hover { color: var(--accent); }
+    a:focus-visible, button:focus-visible, input:focus-visible {
+      outline: 3px solid rgb(15 122 108 / 30%);
+      outline-offset: 3px;
+    }
+    code, pre, .eyebrow, .step-no, .progress-value { font-family: var(--mono); }
+    code { overflow-wrap: anywhere; }
+    h1, h2, h3 { line-height: 1.4; }
+    h1 { margin: 0; font-size: clamp(1.9rem, 5vw, 3.4rem); font-weight: 650; letter-spacing: -0.04em; }
+    h2 { margin: 0; font-size: clamp(1.25rem, 2.4vw, 1.6rem); letter-spacing: -0.02em; scroll-margin-top: 92px; }
+    h3 { margin: 0; font-size: 1rem; }
+    p { margin: 0; }
+    ul, ol { margin: 0; padding-left: 1.3em; }
+    li + li { margin-top: 4px; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    .skip-link {
+      position: fixed; z-index: 100; top: 12px; left: 12px; padding: 9px 14px;
+      border-radius: 8px; background: var(--ink); color: #fff;
+      transform: translateY(-160%); transition: transform 120ms ease-out; text-decoration: none;
+    }
+    .skip-link:focus { color: #fff; transform: translateY(0); }
+    .site-head {
+      position: sticky; z-index: 20; top: 0;
+      border-bottom: 1px solid var(--line);
+      background: rgb(244 246 247 / 93%);
+      backdrop-filter: blur(12px);
+    }
+    .head-inner {
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+      width: min(1120px, calc(100% - 40px)); min-height: 62px; margin: 0 auto;
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 650; text-decoration: none; }
+    .brand-mark {
+      display: inline-grid; place-items: center; width: 30px; height: 30px;
+      border-radius: 9px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700;
+    }
+    .guide-nav { display: flex; gap: 16px; margin-left: auto; font-size: 14px; }
+    .guide-nav a { text-decoration: none; color: var(--dim); }
+    .guide-nav a[aria-current="page"] { color: var(--ink); font-weight: 650; }
+    .hero {
+      width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 56px 0 36px;
+    }
+    .eyebrow { font-size: 12px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+    .lead { max-width: 46em; margin-top: 18px; color: var(--dim); font-size: 1.05rem; }
+    .start-link {
+      display: inline-block; margin-top: 22px; padding: 12px 20px; border-radius: 999px;
+      background: var(--ink); color: #fff; text-decoration: none; font-weight: 650;
+    }
+    .promise { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .promise span {
+      padding: 5px 12px; border: 1px solid var(--line-strong); border-radius: 999px;
+      background: var(--surface); font-size: 12.5px; color: var(--dim);
+    }
+    .workspace {
+      display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px;
+      width: min(1120px, calc(100% - 40px)); margin: 0 auto 72px; align-items: start;
+    }
+    .rail { position: sticky; top: 82px; display: grid; gap: 16px; }
+    .progress-card {
+      padding: 16px; border: 1px solid var(--line); border-radius: 14px;
+      background: var(--surface); box-shadow: var(--shadow);
+    }
+    .progress-top { display: flex; justify-content: space-between; font-size: 13px; }
+    .progress-label { color: var(--dim); }
+    .progress-track {
+      height: 7px; margin: 10px 0 8px; border-radius: 999px; background: var(--surface-muted); overflow: hidden;
+    }
+    .progress-bar { height: 100%; width: 0%; border-radius: 999px; background: var(--accent); transition: width 180ms ease-out; }
+    .progress-note { font-size: 12px; color: var(--note); line-height: 1.6; }
+    .toc { display: grid; gap: 2px; font-size: 13.5px; }
+    .toc a {
+      padding: 6px 10px; border-radius: 8px; color: var(--dim); text-decoration: none;
+    }
+    .toc a:hover { background: var(--surface); }
+    .toc a[aria-current="location"] { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+    .guide-content { display: grid; gap: 22px; min-width: 0; }
+    .intro {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px;
+    }
+    .intro-item {
+      display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line);
+      border-radius: 12px; background: var(--surface);
+    }
+    .intro-item b { font-size: 13px; }
+    .intro-item span { font-size: 13px; color: var(--dim); line-height: 1.6; }
+    .step {
+      padding: 26px; border: 1px solid var(--line); border-radius: 16px;
+      background: var(--surface); box-shadow: var(--shadow);
+    }
+    .step-head { display: flex; gap: 16px; align-items: flex-start; }
+    .step-no { font-size: 13px; color: var(--note); padding-top: 4px; }
+    .step-kicker { display: block; font-size: 12px; color: var(--accent); font-weight: 650; }
+    .step-summary { margin-top: 14px; color: var(--dim); }
+    .step-body { display: grid; gap: 16px; margin-top: 18px; }
+    .subsection { display: grid; gap: 8px; }
+    .copy-block { border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; background: var(--surface-muted); }
+    .prompt-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 10px 14px; border-bottom: 1px solid var(--line-strong); font-size: 13px; font-weight: 650;
+    }
+    .copy-button {
+      padding: 6px 14px; border: 1px solid var(--ink); border-radius: 999px;
+      background: var(--ink); color: #fff; font-size: 12.5px; cursor: pointer;
+    }
+    .copy-button:hover { opacity: 0.86; }
+    .copy-block pre {
+      margin: 0; padding: 16px; overflow-x: auto; background: var(--surface);
+      font-size: 12.8px; line-height: 1.85; white-space: pre-wrap; word-break: break-word;
+    }
+    .callout { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-muted); }
+    .callout strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .callout p { font-size: 13.5px; color: var(--dim); }
+    .callout.safe { border-color: rgb(15 122 108 / 30%); background: var(--accent-soft); }
+    .callout.warn { border-color: rgb(180 96 12 / 32%); background: var(--amber-soft); }
+    .callout.stop { border-color: rgb(179 53 44 / 32%); background: var(--red-soft); }
+    .task {
+      display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px;
+      border: 1px dashed var(--line-strong); border-radius: 12px; cursor: pointer;
+    }
+    .task-check { width: 18px; height: 18px; margin-top: 4px; accent-color: var(--accent); }
+    .task-copy { display: grid; gap: 2px; }
+    .task-copy strong { font-size: 14px; }
+    .task-copy span { font-size: 13px; color: var(--dim); }
+    .next-guide {
+      display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between;
+      padding: 26px; border-radius: 16px; background: var(--ink); color: #fff;
+    }
+    .next-guide p { margin-top: 6px; color: #c9d2d6; font-size: 14px; }
+    .next-link {
+      padding: 11px 20px; border-radius: 999px; background: #fff; color: var(--ink);
+      text-decoration: none; font-weight: 650; white-space: nowrap;
+    }
+    .page-foot { border-top: 1px solid var(--line); }
+    .foot-inner {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
+      width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0;
+      font-size: 12.5px; color: var(--note);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--dim); font-weight: 650; }
+    .table-wrap { overflow-x: auto; }
+    @media (max-width: 860px) {
+      .workspace { grid-template-columns: minmax(0, 1fr); }
+      .rail { position: static; }
+      .toc { display: none; }
+      .step { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">本文へ移動</a>
+  <p id="guide-status" class="sr-only" role="status" aria-live="polite"></p>
+
+  <header class="site-head">
+    <div class="head-inner">
+      <a class="brand" href="setup.html" aria-label="Erlen ガイド">
+        <span class="brand-mark" aria-hidden="true">E</span>
+        <span>Erlen guides</span>
+      </a>
+      <nav class="guide-nav" aria-label="ガイド">
+        <a href="setup.html">初回セットアップ</a>
+        <a href="update.html" aria-current="page">更新の適用</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">更新の適用・AIと一緒に</p>
+      <h1 id="page-title">新しい版も、<br>AIに頼んで適用する。</h1>
+      <p class="lead">
+        更新は、新しいzipを展開してAIに適用を頼むだけです。
+        <strong>あなたの設定も、実験記録も、添付ファイルも上書きされません。</strong>
+        あなたがするのは、展開と、最後の確認だけです。
+      </p>
+      <a class="start-link" href="#ask-ai">AIへの依頼文をコピーする ↓</a>
+      <div class="promise" aria-label="このガイドの特徴">
+        <span>記録はそのまま</span>
+        <span>設定はそのまま</span>
+        <span>控えを取ってから適用</span>
+        <span>テストが緑になるまで反映しない</span>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <aside class="rail" aria-label="更新進捗">
+        <div class="progress-card">
+          <div class="progress-top">
+            <span class="progress-label">更新の適用</span>
+            <span class="progress-value">0 / 3</span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="更新の進捗"
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="progress-bar"></div>
+          </div>
+          <p class="progress-note">チェック状態はこのブラウザに保存されます。</p>
+        </div>
+        <nav class="toc" aria-label="このページの目次">
+          <a href="#extract">新しい版を展開する</a>
+          <a href="#ask-ai">AIへ依頼する</a>
+          <a href="#verify">一緒に確認する</a>
+          <a href="#history">変更履歴</a>
+        </nav>
+      </aside>
+
+      <div class="guide-content">
+        <section class="intro" aria-label="役割分担">
+          <div class="intro-item">
+            <b>AIがすること</b>
+            <span>控えの作成、差し替え、スキーマ追加、検査、反映</span>
+          </div>
+          <div class="intro-item">
+            <b>あなたがすること</b>
+            <span>新しい版の展開と、最後の確認</span>
+          </div>
+          <div class="intro-item">
+            <b>守られるもの</b>
+            <span>実験記録、添付ファイル、あなたの設定</span>
+          </div>
+        </section>
+
+        <section class="step" id="extract" aria-labelledby="extract-title">
+          <div class="step-head">
+            <span class="step-no" aria-hidden="true">01</span>
+            <div>
+              <span class="step-kicker">受け取ったら</span>
+              <h2 id="extract-title">新しい版を展開する</h2>
+            </div>
+          </div>
+          <p class="step-summary">
+            届いたzipをダブルクリックで展開し、フォルダの場所を控えてください。
+            いま運用中のフォルダは、まだ触らなくて大丈夫です。
+          </p>
+          <div class="step-body">
+            <div class="callout">
+              <strong>先に版番号を見ておくと無駄がありません</strong>
+              <p>AIに「いまの版と新しい版のどちらが新しいか教えて」と聞けば、適用が必要かどうかを先に判定します。同じか古ければ、何もしなくて構いません。</p>
+            </div>
+            <label class="task">
+              <input class="task-check" id="update-extract" type="checkbox">
+              <span class="task-copy">
+                <strong>新しい版を展開し、場所を控えた</strong>
+                <span>例: ダウンロードフォルダの中のフォルダ。</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section class="step" id="ask-ai" aria-labelledby="ask-ai-title">
+          <div class="step-head">
+            <span class="step-no" aria-hidden="true">02</span>
+            <div>
+              <span class="step-kicker">まずこれだけ</span>
+              <h2 id="ask-ai-title">この依頼文をAIへ渡す</h2>
+            </div>
+          </div>
+          <p class="step-summary">
+            <strong>運用中のフォルダ</strong>を開いているClaude Codeへ、下の文章をそのまま渡してください。
+            かっこの中だけ、あなたの展開先に書き換えます。
+          </p>
+          <div class="step-body">
+            <div class="copy-block">
+              <div class="prompt-head">
+                <span>AIへの更新適用依頼文</span>
+                <button class="copy-button" type="button" aria-label="更新適用依頼文をコピー">コピー</button>
+              </div>
+              <pre><code>電子実験ノートの新しい版を受け取りました。展開したフォルダは（ここに展開先の場所を書く）です。
+
+SETUP.md の「更新の適用」の節と AI_CONSTITUTION.md を全文読み、その手順どおりに、いま運用中のこのノートへ新しい版を適用してください。
+
+守ってほしいこと：
+- コマンドはすべてあなたが実行し、私には打たせないでください
+- 適用の前に、いまのフォルダの控えとデータベースのバックアップを必ず取ってください
+- 私の設定（wrangler.jsonc の★の値）と、実験記録・添付ファイルは絶対に上書き・初期化しないでください
+- データベースのスキーマ変更は、増えたマイグレーションの適用だけにしてください
+- テストが全部緑になるまで、本番への反映はしないでください
+- 終わったら、公開前検査が全項目そろっていることと、ノートが今までどおり開くことを見せてください
+
+作業中は、いま何をしているかと、私が次にすることだけを短く案内してください。</code></pre>
+            </div>
+            <div class="callout safe">
+              <strong>設定と記録は守られます</strong>
+              <p>あなたが埋めた設定、実験記録、添付ファイル、ログイン情報は更新で上書きされません。手順書がそう書かれていて、AIはそれに従います。</p>
+            </div>
+            <div class="callout">
+              <strong>同梱スキルでも呼べます</strong>
+              <p>Claude Codeなら「新しい版を適用してください」と言うだけで、同梱の erlen-update スキルが同じ手順を実行します。</p>
+            </div>
+            <label class="task">
+              <input class="task-check" id="update-ask-ai" type="checkbox">
+              <span class="task-copy">
+                <strong>依頼文を作業AIへ渡した</strong>
+                <span>AIが SETUP.md の「更新の適用」を読んだことを確認します。</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section class="step" id="verify" aria-labelledby="verify-title">
+          <div class="step-head">
+            <span class="step-no" aria-hidden="true">03</span>
+            <div>
+              <span class="step-kicker">最後の確認</span>
+              <h2 id="verify-title">AIと一緒に確認する</h2>
+            </div>
+          </div>
+          <p class="step-summary">
+            AIから完了報告が来たら、次の4点を確認してください。欠けていたら、そのまま伝えれば大丈夫です。
+          </p>
+          <div class="step-body">
+            <ul>
+              <li>適用前にバックアップを取ったという報告があること</li>
+              <li>テストが全部緑だったという報告があること</li>
+              <li>公開前検査に新しい版番号が出ていること</li>
+              <li>ブラウザでログインし、<strong>更新前に書いたページがそのまま見えること</strong></li>
+            </ul>
+            <div class="callout warn">
+              <strong>おかしいと思ったら、使い続けずに止める</strong>
+              <p>「前に書いたページが見当たらない」「ログインできない」ときは、そのままAIへ伝えてください。適用前の控えから戻せます。自分で操作を重ねないでください。</p>
+            </div>
+            <label class="task">
+              <input class="task-check" id="update-verify" type="checkbox">
+              <span class="task-copy">
+                <strong>4点そろったのを確認した</strong>
+                <span>これで更新は完了です。</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section class="step" id="history" aria-labelledby="history-title" data-latest-version="1.3.0">
+          <div class="step-head">
+            <span class="step-no" aria-hidden="true">＋</span>
+            <div>
+              <span class="step-kicker">変更履歴</span>
+              <h2 id="history-title">この版で変わったこと</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <p class="callout">最新の履歴は https://erlen.jp/changelog でも公開しています。</p>
+            <p><strong>v1.3.0</strong></p>
+            <ul>
+              <li>デモモード（DEMO_MODE）: 招待なしのGoogleログインを閲覧専用として通せる（公開デモ用・既定はオフ）</li>
+              <li>CLAUDE.md を同梱（AIがフォルダを開いた瞬間に掟と手順の入口を読む）</li>
+              <li>変更履歴を CHANGELOG.json に一本化（update.html と erlen.jp/changelog が同じ内容になる）</li>
+              <li>MCP（erlen.jp/mcp）から手順書・スキル本文・最新版情報を取得できる</li>
+            </ul>
+
+            <p><strong>v1.2.1</strong></p>
+            <ul>
+              <li>利用条件の文書を改訂（配布物に署名付きライセンス証明書が同梱されることを明記）</li>
+              <li>zipの中に erlen/LICENSE_CERT.txt が1枚入るようになりました。製品の動作には関与しません</li>
+            </ul>
+
+            <p><strong>v1.2.0</strong></p>
+            <ul>
+              <li>英語ロケールに対応（画面の表示言語を日本語／英語で切り替え）</li>
+              <li>印刷レポートを日英併記に対応</li>
+            </ul>
+
+            <p><strong>v1.1.0</strong></p>
+            <ul>
+              <li>SMILESから構造式を描けるようにした（RDKit.js同梱・保存済みSVGが無い行も表示できる）</li>
+              <li>画面をスマホ対応（640/960pxの2段・反応テーブルはカード表示）</li>
+              <li>印刷用レポートをスマホで開いても崩れないよう修正</li>
+            </ul>
+
+            <p><strong>v1.0.0</strong></p>
+            <ul>
+              <li>初回リリース</li>
+              <li>実験ノート（構造式・反応の自動計算・PubChem補完・自動保存）</li>
+              <li>添付ファイル、全文検索、印刷レポート、改訂履歴</li>
+              <li>試薬マスタ・在庫・機器の台帳（溶媒プリセット41件同梱）</li>
+              <li>Googleログインと招待制のメンバー管理（owner / editor / viewer）</li>
+              <li>セットアップ・更新・バックアップの同梱スキル</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="page-foot">
+    <div class="foot-inner">
+      <span>Erlen user guide</span>
+      <span>技術手順は作業AIが SETUP.md を読みます</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var pageKey = document.documentElement.dataset.guide || 'guide';
+      var storageKey = 'erlen-guide-progress:' + pageKey;
+      var checks = Array.prototype.slice.call(document.querySelectorAll('.task-check'));
+      var meter = document.querySelector('.progress-track[role="progressbar"]');
+      var bar = document.querySelector('.progress-bar');
+      var value = document.querySelector('.progress-value');
+      var note = document.querySelector('.progress-note');
+      var live = document.getElementById('guide-status');
+
+      function read() {
+        try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (e) { return {}; }
+      }
+      function write(v) {
+        // file:// や厳格なプライバシー設定では、画面内だけの進捗として動く
+        try { localStorage.setItem(storageKey, JSON.stringify(v)); } catch (e) { /* noop */ }
+      }
+      function update(announce) {
+        var done = checks.filter(function (c) { return c.checked; }).length;
+        var total = checks.length;
+        var percent = total ? Math.round((done / total) * 100) : 0;
+        if (bar) bar.style.width = percent + '%';
+        if (meter) meter.setAttribute('aria-valuenow', String(percent));
+        if (value) value.textContent = done + ' / ' + total;
+        if (note) {
+          note.textContent = percent === 100
+            ? 'すべて完了しました。ノートを使い始められます。'
+            : 'チェック状態はこのブラウザに保存されます。';
+        }
+        if (announce && live) {
+          live.textContent = percent === 100
+            ? 'ガイドの全項目が完了しました。'
+            : '進捗を更新しました。' + total + '項目中' + done + '項目が完了しています。';
+        }
+      }
+
+      var saved = read();
+      checks.forEach(function (check) {
+        check.checked = saved[check.id] === true;
+        check.addEventListener('change', function () {
+          var next = read();
+          next[check.id] = check.checked;
+          write(next);
+          update(true);
+        });
+      });
+      update(false);
+
+      Array.prototype.forEach.call(document.querySelectorAll('.copy-button'), function (button) {
+        button.addEventListener('click', function () {
+          var block = button.closest('.copy-block');
+          var code = block ? block.querySelector('code') : null;
+          var text = code ? (code.textContent || '').trim() : '';
+          if (!text) return;
+          var done = function () {
+            button.textContent = 'コピーしました';
+            if (live) live.textContent = 'AIへの依頼文をコピーしました。';
+            window.setTimeout(function () { button.textContent = 'コピー'; }, 1600);
+          };
+          var fallback = function () {
+            // クリップボードAPIが使えない環境（file://の一部ブラウザ）向けの保険
+            try {
+              var area = document.createElement('textarea');
+              area.value = text;
+              area.setAttribute('readonly', '');
+              area.style.position = 'fixed';
+              area.style.opacity = '0';
+              document.body.appendChild(area);
+              area.select();
+              document.execCommand('copy');
+              document.body.removeChild(area);
+              done();
+            } catch (e) {
+              if (live) live.textContent = '自動コピーできませんでした。依頼文を選択してコピーしてください。';
+            }
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, fallback);
+          } else {
+            fallback();
+          }
+        });
+      });
+
+      var sections = Array.prototype.slice.call(document.querySelectorAll('.step[id]'));
+      var links = Array.prototype.slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+      if (window.IntersectionObserver && sections.length && links.length) {
+        var byId = {};
+        links.forEach(function (link) { byId[link.getAttribute('href').slice(1)] = link; });
+        var observer = new IntersectionObserver(function (entries) {
+          var visible = entries.filter(function (e) { return e.isIntersecting; })
+            .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; })[0];
+          if (!visible) return;
+          links.forEach(function (link) { link.removeAttribute('aria-current'); });
+          if (byId[visible.target.id]) byId[visible.target.id].setAttribute('aria-current', 'location');
+        }, { rootMargin: '-18% 0px -68% 0px', threshold: [0, 0.1] });
+        sections.forEach(function (section) { observer.observe(section); });
+      }
+    })();
+  </script>
+</body>
+</html>

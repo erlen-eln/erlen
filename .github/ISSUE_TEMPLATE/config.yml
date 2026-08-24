@@ -1,0 +1,15 @@
+# Issueを開くときに出る入口の一覧。
+# blank_issues_enabled: true — 型に合わない話（質問・使い方・翻訳の相談）を閉め出さない。
+blank_issues_enabled: true
+contact_links:
+  - name: Erlen website / 公式サイト
+    url: https://erlen.jp
+    about: Overview, setup guide and changelog. 製品の概要・導入手順・変更履歴。
+
+  - name: Live demo / 公開デモ
+    url: https://demo.erlen.jp/app
+    about: Try it read-only before filing an issue. 触ってから報告できます（閲覧専用）。
+
+  - name: Report a vulnerability / 脆弱性の報告
+    url: https://github.com/erlen-eln/erlen/security/advisories/new
+    about: Private disclosure through GitHub Security Advisories. 公開Issueにはしないでください。

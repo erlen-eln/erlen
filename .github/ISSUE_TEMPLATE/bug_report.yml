@@ -1,0 +1,107 @@
+name: Bug report / 不具合の報告
+description: Something in Erlen does not behave as documented. 動きがドキュメントと違うとき。
+title: '[Bug] '
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file this.
+
+        **Japanese is welcome — 日本語で書いていただいて構いません。**
+
+        Before you write, two requests:
+
+        - **Never paste secrets.** No `GOOGLE_CLIENT_SECRET`, no `SESSION_SECRET`, no session cookie,
+          no D1 `database_id`, no URL that contains a token.
+          **秘密の値は貼らないでください。** クライアントシークレット・セッション鍵・
+          Cookie・D1のIDなどは、ここに書く必要がありません。
+        - **Never paste unpublished research data.** Redact page contents and attachments.
+          **未公開の研究データは貼らないでください。** ページ本文や添付は伏せてください。
+
+        Security vulnerabilities do **not** belong here — please use GitHub's private
+        Security Advisories instead (see SECURITY.md).
+        脆弱性はここではなく、GitHubの非公開のSecurity Advisoriesでお知らせください。
+
+  - type: input
+    id: version
+    attributes:
+      label: Erlen version / Erlenの版
+      description: The `version` in `package.json`, or the version shown in `guides/update.html`.
+      placeholder: 1.3.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened / 何が起きましたか
+      description: What you saw, and what you expected instead.
+      placeholder: |
+        What I did / やったこと:
+        What I saw / 起きたこと:
+        What I expected / 期待していたこと:
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / 再現手順
+      description: Numbered steps, please. Screenshots help.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where / どのあたりの話ですか
+      options:
+        - Setup or deployment / セットアップ・デプロイ
+        - Notebook and pages / ノートブック・ページ
+        - Structure editor or rendering / 構造式エディタ・構造式の描画
+        - Reaction table and calculations / 反応テーブル・自動計算
+        - Reagents, stock or equipment / 試薬・在庫・機器
+        - Attachments / 添付ファイル
+        - Search or print reports / 検索・印刷レポート
+        - Sign-in, members or permissions / ログイン・メンバー・権限
+        - Backup or update / バックアップ・更新
+        - Other or not sure / その他・わからない
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / 環境
+      description: Node version (`node -v`), OS, browser. Add `npm test` output if it is red.
+      placeholder: |
+        Node:
+        OS:
+        Browser:
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Errors / エラーの表示
+      description: >-
+        Browser console errors, or `wrangler tail` output.
+        Redact anything that identifies you or your data.
+      render: text
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Before you submit / 送る前の確認
+      options:
+        - label: I removed every secret and every piece of unpublished data. 秘密の値と未公開データを取り除きました。
+          required: true
+        - label: I searched the existing issues. 既存のIssueを検索しました。
+          required: true
+        - label: This is not a security vulnerability. これは脆弱性の報告ではありません。
+          required: true

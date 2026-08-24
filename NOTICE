@@ -1,0 +1,56 @@
+Erlen — an electronic lab notebook for chemists
+Copyright 2026 Gakushi Kobayashi
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This is a personal project and is not affiliated with any organization.
+本プロジェクトは個人の私的プロジェクトであり、所属組織とは無関係です。
+
+--------------------------------------------------------------------------------
+Third-party software bundled with this product
+--------------------------------------------------------------------------------
+
+1) Ketcher (structure editor)
+   Location : public/ketcher/
+   Version  : 3.7.0 (standalone build, "main" entry only)
+   License  : Apache License, Version 2.0
+   Notice   : Ketcher
+              Copyright (C) 2018 EPAM Systems
+              This product includes software developed at EPAM Systems, Inc.
+   Full license text : public/ketcher/LICENSE
+   Upstream NOTICE   : public/ketcher/NOTICE
+   The third-party notices for the libraries inside the Ketcher bundle are in
+   public/ketcher/static/js/*.LICENSE.txt
+
+2) RDKit.js (structure rendering engine, WebAssembly build of RDKit)
+   Location : public/rdkit/
+   Version  : see public/rdkit/VERSION.txt (npm package @rdkit/rdkit)
+   License  : BSD 3-Clause License
+   Notice   : Copyright (c) 2021-2022, Valence Discovery Inc., Greg Landrum,
+              Paolo Tosco, and other RDKit contributors
+              All rights reserved.
+   Full license text : public/rdkit/LICENSE
+
+--------------------------------------------------------------------------------
+Runtime dependencies (not bundled in this repository)
+--------------------------------------------------------------------------------
+
+   React and React DOM — Copyright (c) Meta Platforms, Inc. and affiliates —
+   MIT License. Installed from npm when the web interface is built.
+
+--------------------------------------------------------------------------------
+External services
+--------------------------------------------------------------------------------
+
+   PubChem (compound lookup) is a public service of the U.S. National Institutes
+   of Health / National Library of Medicine. Data retrieved through it is subject
+   to PubChem's own policies.
+
+   "CAS Registry Number" and "CAS REGISTRY" are trademarks of the American
+   Chemical Society. This repository does not redistribute CAS Registry Numbers;
+   the bundled solvent presets ship with that field empty, and it is filled in at
+   run time from PubChem or by hand.
+
+   Manufacturer and model names that may appear in data you enter are the
+   trademarks of their respective owners. The bundled equipment presets use
+   generic descriptions only.

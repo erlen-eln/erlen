@@ -1,0 +1,66 @@
+{
+  "meta": {
+    "name": "機器プリセット",
+    "description": "有機合成の研究室でよく使う機器のサンプルデータ。メーカー名・型番・管理番号は記入例なので、取り込んだあと自分の機器に書き換えてください。",
+    "count": 5,
+    "source": "Erlen 同梱プリセット（機器 v1）。実在の製品ではなく、機器の種類を表す総称だけを入れてあります。",
+    "caution": "メーカー名・型番は空欄の記入例です。実在の製品名は各社の商標なので同梱していません。自分の研究室の実機に置き換えてください。"
+  },
+  "items": [
+    {
+      "name": "エバポレーター (Rotary evaporator)",
+      "category": "濃縮・溶媒留去",
+      "capacity": "フラスコ 50 mL〜1 L",
+      "temperature_range": "室温〜バス 180 °C",
+      "pressure_range": "約 0〜1013 mbar（ポンプ・コントローラによる）",
+      "manufacturer": "（メーカー名を記入）",
+      "model_number": "ロータリーエバポレーター（型番を記入）",
+      "management_number": "EQ-EVAP-001",
+      "notes": "サンプルのプリセットです。実際のバス・ポンプ・冷却管・トラップの構成に書き換えてください。"
+    },
+    {
+      "name": "HPLC (High performance liquid chromatograph)",
+      "category": "分離・定量分析",
+      "capacity": "バイアル 1.5〜2 mL／カラム例 4.6 × 150 mm",
+      "temperature_range": "カラムオーブン 約 4〜80 °C",
+      "pressure_range": "最大 約 60 MPa（機種による）",
+      "manufacturer": "（メーカー名を記入）",
+      "model_number": "高速液体クロマトグラフ（型番を記入）",
+      "management_number": "EQ-HPLC-001",
+      "notes": "サンプルのプリセットです。実際の検出器・ポンプ・オートサンプラ・カラムオーブン・ソフトウェアに書き換えてください。"
+    },
+    {
+      "name": "FT-IR (赤外分光光度計)",
+      "category": "分光・同定",
+      "capacity": "ATR測定：固体・液体を少量",
+      "temperature_range": "室温で使用",
+      "pressure_range": "大気圧",
+      "manufacturer": "（メーカー名を記入）",
+      "model_number": "FT-IR（ATR）（型番を記入）",
+      "management_number": "EQ-IR-001",
+      "notes": "ATR-FTIRのサンプルプリセットです。実際のアクセサリと測定範囲に書き換えてください。"
+    },
+    {
+      "name": "UV-Vis (紫外可視分光光度計)",
+      "category": "分光・吸光度測定",
+      "capacity": "セル 光路長 1 cm",
+      "temperature_range": "室温（温度制御は任意）",
+      "pressure_range": "大気圧",
+      "manufacturer": "（メーカー名を記入）",
+      "model_number": "紫外可視分光光度計（型番を記入）",
+      "management_number": "EQ-UV-001",
+      "notes": "サンプルのプリセットです。実際の波長範囲・光源・セルホルダの構成に書き換えてください。"
+    },
+    {
+      "name": "pHメーター (pH meter)",
+      "category": "測定・pH",
+      "capacity": "ビーカー／試料量 約 5〜100 mL",
+      "temperature_range": "0〜100 °C（電極による）",
+      "pressure_range": "大気圧",
+      "manufacturer": "（メーカー名を記入）",
+      "model_number": "pHメーター（型番を記入）",
+      "management_number": "EQ-PH-001",
+      "notes": "サンプルのプリセットです。実際の電極の種類・校正液・校正頻度に書き換えてください。"
+    }
+  ]
+}

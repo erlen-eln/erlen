@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+# 同梱しているKetcher（構造式エディタ）のビルド成果物は1バイトも触らせない。
+# 中の分子テンプレート（molfile）が改行コードにCRLFを使っていて、
+# text=auto の改行正規化を通すと構造データが壊れるため。
+public/ketcher/** -text
+# ただし自作の編集画面ホストだけは通常のソース扱い（LF固定）に戻す
+public/ketcher/editor.html text eol=lf
+
+# RDKit（構造式をSMILESから描くWASM）の同梱物も1バイトも触らせない。
+# .wasm は当然として、.js も emscripten の出力なので改行を触る理由が無い
+public/rdkit/** -text
+public/rdkit/VERSION.txt text eol=lf

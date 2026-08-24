@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>構造式エディタ (Ketcher)</title>
+  <!--
+    構造式エディタのホストページ。
+    画面（web/src/components/KetcherModal.tsx）から iframe で開かれ、postMessage で会話する。
+
+    やりとりの約束（親＝eln本体 / 子＝このページ）
+      子→親  {type:'READY'}                            … Ketcherの起動が終わった
+      親→子  {type:'SET_MOLECULE', molfile}            … 既存の構造を読み込ませる（空文字なら白紙）
+      子→親  {type:'LOADED'}                           … 読み込みが済んだ（親はここで「保存」を押せるようにする）
+      親→子  {type:'GET_RESULT'}                       … 今描かれている構造をよこせ
+      子→親  {type:'RESULT', molfile, smiles, svg}     … その返事（白紙なら3つとも空文字）
+      子→親  {type:'ERROR', message}                   … 失敗（親は保存せずメッセージを出す）
+
+    LOADEDを挟んでいる理由（実測でハマった罠）
+      window.ketcher が生えても、構造を解釈するエンジン（Indigo/WASM）はまだ温まっていないことがある。
+      その状態で setMolecule すると、例外も出さずに「白紙のまま」成功して返ってくる。
+      そこで applyMolecule() は読み込み後に読み返して確かめ、駄目なら数回やり直す。
+      親は LOADED を受け取るまで保存ボタンを押せない（＝既存の構造を空で上書きさせない）。
+
+    同一オリジン（同じWorkerが配る）でしか使わないので、
+    受信も送信も origin を自分のオリジンに限定している。
+
+    Ketcher v3.7.0（Apache License 2.0 / EPAM Systems）の standalone ビルドのうち、
+    mainエントリの動作に必要なファイルだけを static/ 配下へ選抜して同梱している。
+    差し替えるときは、この編集画面が読む2本（下のscript/link）のファイル名も併せて直すこと。
+    1ファイル25MiB制限（Cloudflare Workers Assets）は test/asset-size.test.mjs が見張っている。
+  -->
+  <link href="./static/css/main.748bd42d.css" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    #root { width: 100%; height: 100%; }
+    /* Ketcherが立ち上がるまでの待ち画面。起動が遅い端末でも白紙に見えないように */
+    #boot {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; color: #556;
+      background: #fff; z-index: 10;
+    }
+    #boot.done { display: none; }
+  </style>
+  <script defer="defer" src="./static/js/main.8617f334.js"></script>
+</head>
+<body>
+<noscript>この画面はJavaScriptが必要です。</noscript>
+<div id="root"></div>
+<div id="boot">構造式エディタを準備しています…</div>
+<script>
+(function () {
+  'use strict';
+
+  var ORIGIN = window.location.origin;
+  // Ketcherの起動待ち。200ms間隔で最大30秒（初回は22MBのJSを読むので余裕を持たせる）
+  var POLL_MS = 200;
+  var MAX_TRIES = 150;
+
+  function send(message) {
+    if (window.parent === window) return; // iframeで開かれていないときは黙る
+    window.parent.postMessage(message, ORIGIN);
+  }
+
+  function fail(where, error) {
+    var text = (error && (error.message || error.toString())) || '不明なエラー';
+    console.error('[eln ketcher] ' + where, error);
+    send({ type: 'ERROR', message: where + ': ' + text });
+  }
+
+  // 生成されたSVGはXML宣言（<?xml ... ?>）から始まる。
+  // このままHTMLへ埋めると宣言がコメント扱いで表に出てしまうので、<svg から始まる形へ削っておく。
+  function trimSvg(svg) {
+    var text = String(svg || '');
+    var at = text.indexOf('<svg');
+    return at < 0 ? '' : text.slice(at).trim();
+  }
+
+  // 今キャンバスに描かれている構造を molfile / SMILES / SVG の3点で取り出す。
+  // 白紙のときは3つとも空文字を返す（親はそれを「構造式を消した」として保存する）。
+  function collectResult() {
+    var ketcher = window.ketcher;
+    return ketcher.getMolfile()
+      .then(function (molfile) {
+        // 原子が1つも無いmolfileは「白紙」。SMILESもSVGも作らない
+        if (!molfile || !hasAtoms(molfile)) {
+          return { type: 'RESULT', molfile: '', smiles: '', svg: '' };
+        }
+        return Promise.all([
+          ketcher.getSmiles().catch(function () { return ''; }),
+          // SVGは表の構造式セルにそのまま埋める。失敗しても保存自体は続けたいので空文字へ倒す
+          ketcher.generateImage(molfile, { outputFormat: 'svg', backgroundColor: '255, 255, 255' })
+            .then(function (blob) { return blob.text(); })
+            .then(trimSvg)
+            .catch(function (e) { console.warn('[eln ketcher] generateImage failed', e); return ''; }),
+        ]).then(function (parts) {
+          return { type: 'RESULT', molfile: molfile, smiles: parts[0] || '', svg: parts[1] || '' };
+        });
+      });
+  }
+
+  // 既存の構造をキャンバスへ載せる。
+  // エンジンが温まっていないうちは黙って白紙のまま成功するので、読み返して確かめ、駄目ならやり直す。
+  var LOAD_TRIES = 6;
+  var LOAD_WAIT_MS = 600;
+
+  function applyMolecule(molfile, attempt) {
+    var n = attempt || 0;
+    if (!molfile.trim()) {
+      // 白紙から描き始める場合。消すだけなので確認は要らない
+      return Promise.resolve(window.ketcher.editor.clear()).then(function () {
+        send({ type: 'LOADED' });
+      });
+    }
+    return window.ketcher.setMolecule(molfile)
+      .catch(function (e) { console.warn('[eln ketcher] setMolecule failed', e); })
+      .then(function () { return new Promise(function (r) { window.setTimeout(r, LOAD_WAIT_MS); }); })
+      .then(function () { return window.ketcher.getMolfile(); })
+      .then(function (current) {
+        if (hasAtoms(current)) {
+          send({ type: 'LOADED' });
+          return null;
+        }
+        if (n + 1 < LOAD_TRIES) return applyMolecule(molfile, n + 1);
+        fail('保存済みの構造式を読み込めませんでした', new Error('empty after retries'));
+        return null;
+      });
+  }
+
+  // molfileのカウント行（4行目）の原子数を読む。'  0  0  0 ...' なら白紙
+  function hasAtoms(molfile) {
+    var lines = String(molfile).split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].indexOf('V2000') >= 0 || lines[i].indexOf('V3000 COUNTS') >= 0) {
+        var n = parseInt(lines[i].trim().split(/\s+/)[0], 10);
+        if (lines[i].indexOf('V3000 COUNTS') >= 0) {
+          n = parseInt(lines[i].trim().split(/\s+/)[3], 10);
+        }
+        return Number.isFinite(n) ? n > 0 : true;
+      }
+    }
+    // 形式が読めないときは「中身がある」とみなす（利用者の描いたものを捨てない方に倒す）
+    return String(molfile).trim().length > 0;
+  }
+
+  function onMessage(event) {
+    if (event.origin !== ORIGIN) return; // よそのページからの指示は受け取らない
+    var data = event.data;
+    if (!data || typeof data !== 'object') return;
+
+    if (data.type === 'SET_MOLECULE') {
+      var molfile = typeof data.molfile === 'string' ? data.molfile : '';
+      applyMolecule(molfile, 0).catch(function (e) { fail('構造の読み込みに失敗しました', e); });
+      return;
+    }
+
+    if (data.type === 'GET_RESULT') {
+      collectResult()
+        .then(send)
+        .catch(function (e) { fail('構造の取り出しに失敗しました', e); });
+    }
+  }
+
+  var tries = 0;
+  function waitForKetcher() {
+    tries++;
+    if (window.ketcher && window.ketcher.getMolfile && window.ketcher.editor) {
+      var boot = document.getElementById('boot');
+      if (boot) boot.className = 'done';
+      window.addEventListener('message', onMessage);
+      send({ type: 'READY' });
+      return;
+    }
+    if (tries < MAX_TRIES) {
+      window.setTimeout(waitForKetcher, POLL_MS);
+      return;
+    }
+    send({ type: 'ERROR', message: '構造式エディタの起動が終わりませんでした（読み込みに失敗した可能性があります）' });
+  }
+
+  window.onerror = function (message) {
+    send({ type: 'ERROR', message: 'JS: ' + message });
+    return false;
+  };
+
+  if (document.readyState === 'complete') waitForKetcher();
+  else window.addEventListener('load', waitForKetcher);
+})();
+</script>
+</body>
+</html>

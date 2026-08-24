@@ -1,0 +1,3 @@
+@rdkit/rdkit 2025.3.4-1.0.0
+同梱物: RDKit_minimal.js / RDKit_minimal.wasm / LICENSE（scripts/copy-rdkit.mjs がコピー）
+ライセンス: BSD 3-Clause（RDKit本体と同じ・全文は同じフォルダの LICENSE）

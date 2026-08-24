@@ -1,0 +1,98 @@
+[
+  {
+    "version": "unreleased",
+    "date": "2026-08-24",
+    "ja": [
+      "OSS化の準備: ライセンスを Apache License 2.0 に変更（LICENSE / NOTICE をルートに追加・EULAは廃止）",
+      "同梱物のライセンス表記を整備（Ketcher の LICENSE・NOTICE、RDKit.js の LICENSE を同梱）",
+      "READMEを日英併記で全面改訂（オープンソース版の入手・導入・貢献の案内）",
+      "溶媒プリセットからCAS登録番号を削除（空欄で配布。必要ならPubChem補完か手入力で埋める）",
+      "機器プリセットのメーカー名・型番を総称の記入例に置き換え",
+      "貢献の手引き・セキュリティ方針・今後の見通しを同梱（CONTRIBUTING.md / SECURITY.md / ROADMAP.md）",
+      "GitHub Actionsを追加: pushとPull Requestでテストと型検査が走り、v* タグで配布zip付きのReleaseが自動で作られる"
+    ],
+    "en": [
+      "Open-source preparation: relicensed under the Apache License 2.0 (LICENSE / NOTICE added at the root; the EULA is retired)",
+      "Bundled third-party notices completed (Ketcher's LICENSE and NOTICE, RDKit.js's LICENSE)",
+      "README rewritten in Japanese and English (how to get, deploy and contribute to the open-source edition)",
+      "CAS Registry Numbers removed from the solvent presets (shipped empty; fill them in from PubChem or by hand)",
+      "Equipment preset maker and model names replaced with generic placeholders",
+      "Contribution guide, security policy and roadmap bundled (CONTRIBUTING.md / SECURITY.md / ROADMAP.md)",
+      "GitHub Actions added: tests and type checks run on every push and pull request, and a v* tag publishes a Release with the distribution zip"
+    ]
+  },
+  {
+    "version": "1.3.0",
+    "date": "2026-08-22",
+    "ja": [
+      "デモモード（DEMO_MODE）: 招待なしのGoogleログインを閲覧専用として通せる（公開デモ用・既定はオフ）",
+      "CLAUDE.md を同梱（AIがフォルダを開いた瞬間に掟と手順の入口を読む）",
+      "変更履歴を CHANGELOG.json に一本化（update.html と erlen.jp/changelog が同じ内容になる）",
+      "MCP（erlen.jp/mcp）から手順書・スキル本文・最新版情報を取得できる"
+    ],
+    "en": [
+      "Demo mode (DEMO_MODE): lets uninvited Google logins in as read-only viewers (for public demos; off by default)",
+      "CLAUDE.md bundled so the AI reads the rules and entry points the moment it opens the folder",
+      "Changelog unified in CHANGELOG.json (update.html and erlen.jp/changelog now share one source)",
+      "Setup guide, skill texts and latest-version info can be fetched over MCP (erlen.jp/mcp)"
+    ]
+  },
+  {
+    "version": "1.2.1",
+    "date": "2026-08-19",
+    "ja": [
+      "利用条件の文書を改訂（配布物に署名付きライセンス証明書が同梱されることを明記）",
+      "zipの中に erlen/LICENSE_CERT.txt が1枚入るようになりました。製品の動作には関与しません"
+    ],
+    "en": [
+      "Revised the terms document (states that a signed license certificate is bundled with the distribution)",
+      "The zip now contains one erlen/LICENSE_CERT.txt file. It has no effect on how the product runs"
+    ]
+  },
+  {
+    "version": "1.2.0",
+    "date": "2026-08-18",
+    "ja": [
+      "英語ロケールに対応（画面の表示言語を日本語／英語で切り替え）",
+      "印刷レポートを日英併記に対応"
+    ],
+    "en": [
+      "Added an English locale (switch the interface between Japanese and English)",
+      "Print reports can now be produced in English as well as Japanese"
+    ]
+  },
+  {
+    "version": "1.1.0",
+    "date": "2026-08-16",
+    "ja": [
+      "SMILESから構造式を描けるようにした（RDKit.js同梱・保存済みSVGが無い行も表示できる）",
+      "画面をスマホ対応（640/960pxの2段・反応テーブルはカード表示）",
+      "印刷用レポートをスマホで開いても崩れないよう修正"
+    ],
+    "en": [
+      "Structures can be drawn from SMILES (RDKit.js bundled; rows without a stored SVG now render)",
+      "Made the interface work on phones (breakpoints at 640/960px; the reaction table becomes cards)",
+      "Fixed the print report so it no longer breaks when opened on a phone"
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "date": "2026-08-16",
+    "ja": [
+      "初回リリース",
+      "実験ノート（構造式・反応の自動計算・PubChem補完・自動保存）",
+      "添付ファイル、全文検索、印刷レポート、改訂履歴",
+      "試薬マスタ・在庫・機器の台帳（溶媒プリセット41件同梱）",
+      "Googleログインと招待制のメンバー管理（owner / editor / viewer）",
+      "セットアップ・更新・バックアップの同梱スキル"
+    ],
+    "en": [
+      "First release",
+      "Lab notebook (structures, automatic reaction calculations, PubChem lookup, autosave)",
+      "Attachments, full-text search, print reports, revision history",
+      "Reagent master, stock and equipment ledgers (41 solvent presets bundled)",
+      "Google sign-in and invitation-based member management (owner / editor / viewer)",
+      "Bundled setup, update and backup skills"
+    ]
+  }
+]

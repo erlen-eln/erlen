@@ -1,0 +1,50 @@
+{
+  // Erlen: 化学者のための実験ノートOS（Cloudflare Worker + D1 + R2）。
+  // ★印は必ずあなたの値に書き換える。書き換え漏れは `npm run doctor` が検出する。
+  "name": "erlen",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-07-01",
+  "observability": { "enabled": true },
+  // 画面（public/）は静的アセットとして配信する。
+  // run_worker_first に挙げたパスだけWorkerが先に受け取り、それ以外はアセットへ直行する。
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/auth/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "erlen",
+      // ★ `npm exec -- wrangler d1 create erlen` の出力の database_id に書き換える
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+    }
+  ],
+  // 添付ファイル（スペクトル画像・PDF等）の保管先。
+  // `npm exec -- wrangler r2 bucket create erlen-attachments` で先に作る
+  "r2_buckets": [
+    {
+      "binding": "ATTACHMENTS",
+      "bucket_name": "erlen-attachments"
+    }
+  ],
+  "vars": {
+    // ★ デプロイ後のWorker URL（例: https://erlen.<あなたのサブドメイン>.workers.dev）。
+    //    GoogleログインのリダイレクトURIの土台になるので、末尾スラッシュなしで書く
+    "BASE_URL": "REPLACE_WITH_YOUR_WORKER_URL",
+    // ★ このノートの持ち主（オーナー）のGoogleアカウント。
+    //    オーナーだけが最初にログインでき、以降はオーナーが画面からメンバーを招待する。
+    //    招待もされていないアドレスは、ログインできても ?login=denied で弾かれる
+    "OWNER_EMAIL": "REPLACE_WITH_YOUR_EMAIL",
+    // 添付1ファイルあたりの上限サイズ（MB）。R2無料枠を守る既定値
+    "MAX_ATTACHMENT_MB": "25",
+    // デモモード。"1" にすると、招待していない人のGoogleログインを
+    // 「閲覧専用（viewer）」として通す（公開デモ用）。あなたのノートは既定の "0" のままにする。
+    // "1" のあいだは、ログインできた誰もが全データを閲覧できる（書き込みはサーバが403で断る）
+    "DEMO_MODE": "0"
+  }
+  // secrets（`npm exec -- wrangler secret put <名前>` で入れる。値はここに書かない）:
+  //   GOOGLE_CLIENT_ID     … Google Cloud ConsoleのOAuthクライアントID
+  //   GOOGLE_CLIENT_SECRET … 同シークレット
+  //   SESSION_SECRET       … ログインCookieの署名鍵。32文字以上のランダム文字列を自分で作る
+}

@@ -1,0 +1,25 @@
+{
+  "name": "erlen",
+  "version": "1.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Erlen — 化学者のためのオープンソース電子実験ノート（Cloudflare Workers + D1 + R2・サーバー不要）",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "doctor": "node scripts/doctor.mjs",
+    "doctor:remote": "node scripts/doctor.mjs --remote",
+    "package": "node scripts/package.mjs",
+    "changelog": "node scripts/render-changelog.mjs",
+    "prepare:rdkit": "node scripts/copy-rdkit.mjs",
+    "build:web": "npm --prefix web ci && npm --prefix web run build",
+    "typecheck:web": "npm --prefix web run typecheck"
+  },
+  "devDependencies": {
+    "@rdkit/rdkit": "^2025.3.4-1.0.0",
+    "wrangler": "4.123.0"
+  }
+}

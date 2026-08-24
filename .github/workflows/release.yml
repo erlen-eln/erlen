@@ -1,0 +1,62 @@
+# Release — `v*` のタグを push したら、配布zipを作って GitHub Releases に添付する。
+#
+# 【使い方】メンテナの手順は docs/MAINTAINING.md §リリース手順 が正本。
+#   1. CHANGELOG.json の先頭を "unreleased" から版番号に書き換える
+#   2. package.json / src/api/health.mjs の版を上げる
+#   3. npm run changelog（guides/update.html を焼き直す）
+#   4. commit → git tag vX.Y.Z → git push origin main --tags
+#   ここから先はこのワークフローの仕事。
+#
+# 【設計の意図】
+# ・zipは scripts/package.mjs が作る。あれ自身がテストの門を持っているので、赤い配布物は出ない
+# ・scripts/release-notes.mjs を先に走らせるのは、タグ・package.json・CHANGELOG.json の
+#   3つが食い違っていたら Release を作る前に落とすため（打ち間違えたタグで配らない）
+# ・Release本文は CHANGELOG.json から機械生成する。手書きすると必ず配布物と食い違う
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Releaseを作ってzipを添付するので書き込みが要る（この1本だけ）
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 配布zipを作ってReleaseに添付
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js 22 を用意
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: 依存を入れる（package-lock.json のとおりに）
+        run: npm ci
+
+      - name: タグ・package.json・CHANGELOG.json の一致を確かめてリリースノートを組む
+        run: node scripts/release-notes.mjs "${GITHUB_REF_NAME}" --out release-notes.md
+
+      - name: ユニットテスト
+        run: npm test
+
+      - name: 配布zipを作る
+        run: node scripts/package.mjs
+
+      - name: 作られたzipを確認
+        run: ls -l dist-zip
+
+      - name: Releaseを作成してzipを添付
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Erlen ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: dist-zip/erlen-*.zip
+          draft: false
+          prerelease: false

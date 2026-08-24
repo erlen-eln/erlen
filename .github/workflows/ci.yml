@@ -1,0 +1,65 @@
+# CI — 変更が入るたびに「テストが全緑か」を機械が確かめる門番。
+#
+# 【設計の意図】
+# ・AI_CONSTITUTION.md 第四条「テストが全緑でないコードをデプロイしない」を人手に頼らない
+# ・main への直push でも Pull Request でも同じ検査が走る（どちらの流儀でも守られる）
+# ・Node は package.json の engines（>=22.5）に合わせて 22 系
+# ・ジョブを2本に分けているのは、画面（web/）の型検査が本体テストと依存関係を共有しないため。
+#   web/ の node_modules は重いので、本体だけ直したときに巻き込まれないよう独立させている
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# 読むだけ。CIがリポジトリへ書き戻すことは無い
+permissions:
+  contents: read
+
+# 同じブランチへ続けてpushしたら古い実行は打ち切る（無駄な待ちを作らない）
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: npm test (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js 22 を用意
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: 依存を入れる（package-lock.json のとおりに）
+        run: npm ci
+
+      - name: ユニットテスト
+        run: npm test
+
+  typecheck-web:
+    name: typecheck web (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Node.js 22 を用意
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 画面の依存を入れる
+        run: npm --prefix web ci
+
+      - name: TypeScriptの型検査
+        run: npm run typecheck:web

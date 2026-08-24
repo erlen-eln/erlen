@@ -1,0 +1,74 @@
+name: Feature request / 要望・提案
+description: Suggest something Erlen should be able to do. こうなってほしい、という提案。
+title: '[Feature] '
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for thinking about where Erlen should go.
+
+        **Japanese is welcome — 日本語で書いていただいて構いません。**
+
+        Two things worth knowing before you write:
+
+        - Erlen is deliberately **one deployment with no extra services**. Proposals that require
+          another server, another paid service or a background daemon are unlikely to be accepted.
+          Erlenは「追加のサービスを増やさない」ことを設計の柱にしています。
+        - **Records are never destroyed.** Anything that deletes history, compacts the audit trail
+          or hides who changed what will be declined (see AI_CONSTITUTION.md).
+          記録を消す・改訂履歴を畳む類の提案はお断りしています。
+
+        ROADMAP.md shows what is already being considered.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem / 困っていること
+      description: >-
+        Describe the situation in the lab, not the implementation.
+        What are you doing today, and where does it hurt?
+      placeholder: When I write up a reaction, I have to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like / どうなってほしいか
+      description: How it would look and behave from the user's side.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where / どのあたりの話ですか
+      options:
+        - Notebook and pages / ノートブック・ページ
+        - Structure editor or rendering / 構造式エディタ・構造式の描画
+        - Reaction table and calculations / 反応テーブル・自動計算
+        - Reagents, stock or equipment / 試薬・在庫・機器
+        - Attachments / 添付ファイル
+        - Search or print reports / 検索・印刷レポート
+        - Sign-in, members or permissions / ログイン・メンバー・権限
+        - Setup, update or backup / セットアップ・更新・バックアップ
+        - Documentation or translation / ドキュメント・翻訳
+        - Other / その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead / いま代わりにしていること
+      description: Workarounds, other tools, or a manual procedure.
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Would you like to build it? / 自分で作ってみますか
+      options:
+        - label: I am willing to open a pull request for this. Pull Requestを出してみたいです。
+          required: false

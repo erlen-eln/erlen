@@ -1,0 +1,380 @@
+{
+  "meta": {
+    "name": "溶媒プリセット",
+    "description": "研究室でよく使う溶媒と溶媒的な試薬の初期データ。取り込んだあとは自由に編集・削除できます。CAS登録番号は同梱していません（空欄で配布します）。必要なときは画面のPubChem補完で埋めるか、手で入力してください。",
+    "count": 41,
+    "source": "Erlen 同梱プリセット（溶媒 v1）。分子量・密度・沸点・融点は教科書レベルの物性値、SMILES／InChIは構造から生成した値です。特定のデータベースからの転載ではありません。",
+    "caution": "密度・純度・沸点・融点・法規区分はグレードや供給元で変わります。業務で使う前に必ずSDS／CoAで確認してください。CAS登録番号は American Chemical Society の登録商標のため同梱していません。"
+  },
+  "items": [
+    {
+      "name": "水 (Water)",
+      "cas_number": "",
+      "molecular_weight": 18.02,
+      "purity": null,
+      "density": 0.998,
+      "smiles": "O",
+      "notes": "分子式: H2O ／ InChI: InChI=1S/H2O/h1H2 ／ 沸点: 100 °C ／ 融点: 0 °C ／ 密度: 0.998 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "メタノール (Methanol)",
+      "cas_number": "",
+      "molecular_weight": 32.04,
+      "purity": null,
+      "density": 0.792,
+      "smiles": "CO",
+      "notes": "分子式: CH4O ／ InChI: InChI=1S/CH4O/c1-2/h2H,1H3 ／ 沸点: 64.7 °C ／ 融点: -97.6 °C ／ 密度: 0.792 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "エタノール (Ethanol)",
+      "cas_number": "",
+      "molecular_weight": 46.07,
+      "purity": null,
+      "density": 0.789,
+      "smiles": "CCO",
+      "notes": "分子式: C2H6O ／ InChI: InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3 ／ 沸点: 78.4 °C ／ 融点: -114.1 °C ／ 密度: 0.789 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "1-プロパノール (1-Propanol)",
+      "cas_number": "",
+      "molecular_weight": 60.1,
+      "purity": null,
+      "density": 0.803,
+      "smiles": "CCCO",
+      "notes": "分子式: C3H8O ／ InChI: InChI=1S/C3H8O/c1-2-3-4/h4H,2-3H2,1H3 ／ 沸点: 97.2 °C ／ 融点: -126 °C ／ 密度: 0.803 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "2-プロパノール (2-Propanol / Isopropanol)",
+      "cas_number": "",
+      "molecular_weight": 60.1,
+      "purity": null,
+      "density": 0.785,
+      "smiles": "CC(O)C",
+      "notes": "分子式: C3H8O ／ InChI: InChI=1S/C3H8O/c1-3(2)4/h3-4H,1-2H3 ／ 沸点: 82.6 °C ／ 融点: -89.5 °C ／ 密度: 0.785 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "1-ブタノール (1-Butanol)",
+      "cas_number": "",
+      "molecular_weight": 74.12,
+      "purity": null,
+      "density": 0.81,
+      "smiles": "CCCCO",
+      "notes": "分子式: C4H10O ／ InChI: InChI=1S/C4H10O/c1-2-3-4-5/h5H,2-4H2,1H3 ／ 沸点: 117.7 °C ／ 融点: -89.8 °C ／ 密度: 0.81 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "tert-ブタノール (tert-Butanol)",
+      "cas_number": "",
+      "molecular_weight": 74.12,
+      "purity": null,
+      "density": 0.775,
+      "smiles": "CC(C)(C)O",
+      "notes": "分子式: C4H10O ／ InChI: InChI=1S/C4H10O/c1-4(2,3)5/h5H,1-3H3 ／ 沸点: 82.4 °C ／ 融点: 25.5 °C ／ 密度: 0.775 g/mL (25 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "アセトン (Acetone)",
+      "cas_number": "",
+      "molecular_weight": 58.08,
+      "purity": null,
+      "density": 0.791,
+      "smiles": "CC(C)=O",
+      "notes": "分子式: C3H6O ／ InChI: InChI=1S/C3H6O/c1-3(2)4/h1-2H3 ／ 沸点: 56.1 °C ／ 融点: -94.7 °C ／ 密度: 0.791 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "アセトニトリル (Acetonitrile)",
+      "cas_number": "",
+      "molecular_weight": 41.05,
+      "purity": null,
+      "density": 0.786,
+      "smiles": "CC#N",
+      "notes": "分子式: C2H3N ／ InChI: InChI=1S/C2H3N/c1-2-3/h1H3 ／ 沸点: 81.6 °C ／ 融点: -45.7 °C ／ 密度: 0.786 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ジクロロメタン (Dichloromethane)",
+      "cas_number": "",
+      "molecular_weight": 84.93,
+      "purity": null,
+      "density": 1.325,
+      "smiles": "ClCCl",
+      "notes": "分子式: CH2Cl2 ／ InChI: InChI=1S/CH2Cl2/c2-1-3/h1H2 ／ 沸点: 39.6 °C ／ 融点: -96.7 °C ／ 密度: 1.325 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "クロロホルム (Chloroform)",
+      "cas_number": "",
+      "molecular_weight": 119.38,
+      "purity": null,
+      "density": 1.489,
+      "smiles": "ClC(Cl)Cl",
+      "notes": "分子式: CHCl3 ／ InChI: InChI=1S/CHCl3/c2-1(3)4/h1H ／ 沸点: 61.2 °C ／ 融点: -63.5 °C ／ 密度: 1.489 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "四塩化炭素 (Carbon tetrachloride)",
+      "cas_number": "",
+      "molecular_weight": 153.82,
+      "purity": null,
+      "density": 1.594,
+      "smiles": "ClC(Cl)(Cl)Cl",
+      "notes": "分子式: CCl4 ／ InChI: InChI=1S/CCl4/c2-1(3,4)5 ／ 沸点: 76.7 °C ／ 融点: -22.9 °C ／ 密度: 1.594 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ジメチルスルホキシド (Dimethyl sulfoxide / DMSO)",
+      "cas_number": "",
+      "molecular_weight": 78.14,
+      "purity": null,
+      "density": 1.1,
+      "smiles": "CS(C)=O",
+      "notes": "分子式: C2H6OS ／ InChI: InChI=1S/C2H6OS/c1-4(2)3/h1-2H3 ／ 沸点: 189 °C ／ 融点: 18.5 °C ／ 密度: 1.1 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "N,N-ジメチルホルムアミド (N,N-Dimethylformamide / DMF)",
+      "cas_number": "",
+      "molecular_weight": 73.09,
+      "purity": null,
+      "density": 0.944,
+      "smiles": "CN(C)C=O",
+      "notes": "分子式: C3H7NO ／ InChI: InChI=1S/C3H7NO/c1-4(2)3-5/h3H,1-2H3 ／ 沸点: 153 °C ／ 融点: -61 °C ／ 密度: 0.944 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "N,N-ジメチルアセトアミド (N,N-Dimethylacetamide / DMAc)",
+      "cas_number": "",
+      "molecular_weight": 87.12,
+      "purity": null,
+      "density": 0.937,
+      "smiles": "CC(=O)N(C)C",
+      "notes": "分子式: C4H9NO ／ InChI: InChI=1S/C4H9NO/c1-4(6)5(2)3/h1-3H3 ／ 沸点: 165 °C ／ 融点: -20 °C ／ 密度: 0.937 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "N-メチル-2-ピロリドン (N-Methyl-2-pyrrolidone / NMP)",
+      "cas_number": "",
+      "molecular_weight": 99.13,
+      "purity": null,
+      "density": 1.028,
+      "smiles": "CN1CCCC1=O",
+      "notes": "分子式: C5H9NO ／ InChI: InChI=1S/C5H9NO/c1-6-4-2-3-5(6)7/h2-4H2,1H3 ／ 沸点: 202 °C ／ 融点: -24 °C ／ 密度: 1.028 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "テトラヒドロフラン (Tetrahydrofuran / THF)",
+      "cas_number": "",
+      "molecular_weight": 72.11,
+      "purity": null,
+      "density": 0.889,
+      "smiles": "C1CCOC1",
+      "notes": "分子式: C4H8O ／ InChI: InChI=1S/C4H8O/c1-2-4-5-3-1/h1-4H2 ／ 沸点: 66 °C ／ 融点: -108.4 °C ／ 密度: 0.889 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "1,4-ジオキサン (1,4-Dioxane)",
+      "cas_number": "",
+      "molecular_weight": 88.11,
+      "purity": null,
+      "density": 1.034,
+      "smiles": "C1COCCO1",
+      "notes": "分子式: C4H8O2 ／ InChI: InChI=1S/C4H8O2/c1-2-6-4-3-5-1/h1-4H2 ／ 沸点: 101.1 °C ／ 融点: 11.8 °C ／ 密度: 1.034 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ジエチルエーテル (Diethyl ether)",
+      "cas_number": "",
+      "molecular_weight": 74.12,
+      "purity": null,
+      "density": 0.713,
+      "smiles": "CCOCC",
+      "notes": "分子式: C4H10O ／ InChI: InChI=1S/C4H10O/c1-3-5-4-2/h3-4H2,1-2H3 ／ 沸点: 34.6 °C ／ 融点: -116.3 °C ／ 密度: 0.713 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "メチル tert-ブチルエーテル (Methyl tert-butyl ether / MTBE)",
+      "cas_number": "",
+      "molecular_weight": 88.15,
+      "purity": null,
+      "density": 0.74,
+      "smiles": "COC(C)(C)C",
+      "notes": "分子式: C5H12O ／ InChI: InChI=1S/C5H12O/c1-5(2,3)6-4/h1-4H3 ／ 沸点: 55.2 °C ／ 融点: -109 °C ／ 密度: 0.74 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "1,2-ジメトキシエタン (1,2-Dimethoxyethane / DME)",
+      "cas_number": "",
+      "molecular_weight": 90.12,
+      "purity": null,
+      "density": 0.868,
+      "smiles": "COCCOC",
+      "notes": "分子式: C4H10O2 ／ InChI: InChI=1S/C4H10O2/c1-5-3-4-6-2/h3-4H2,1-2H3 ／ 沸点: 85 °C ／ 融点: -58 °C ／ 密度: 0.868 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "トルエン (Toluene)",
+      "cas_number": "",
+      "molecular_weight": 92.14,
+      "purity": null,
+      "density": 0.867,
+      "smiles": "Cc1ccccc1",
+      "notes": "分子式: C7H8 ／ InChI: InChI=1S/C7H8/c1-7-5-3-2-4-6-7/h2-6H,1H3 ／ 沸点: 110.6 °C ／ 融点: -95 °C ／ 密度: 0.867 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ベンゼン (Benzene)",
+      "cas_number": "",
+      "molecular_weight": 78.11,
+      "purity": null,
+      "density": 0.879,
+      "smiles": "c1ccccc1",
+      "notes": "分子式: C6H6 ／ InChI: InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H ／ 沸点: 80.1 °C ／ 融点: 5.5 °C ／ 密度: 0.879 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "キシレン (Xylene)",
+      "cas_number": "",
+      "molecular_weight": 106.17,
+      "purity": null,
+      "density": 0.86,
+      "smiles": "Cc1ccccc1C",
+      "notes": "分子式: C8H10 ／ InChI: InChI=1S/C8H10/c1-7-5-3-4-6-8(7)2/h3-6H,1-2H3 ／ 沸点: 137–144 °C ／ 融点: mixture-dependent ／ 密度: 0.86 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ヘキサン (Hexane)",
+      "cas_number": "",
+      "molecular_weight": 86.18,
+      "purity": null,
+      "density": 0.659,
+      "smiles": "CCCCCC",
+      "notes": "分子式: C6H14 ／ InChI: InChI=1S/C6H14/c1-3-5-6-4-2/h3-6H2,1-2H3 ／ 沸点: 68.7 °C ／ 融点: -95 °C ／ 密度: 0.659 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ヘプタン (Heptane)",
+      "cas_number": "",
+      "molecular_weight": 100.2,
+      "purity": null,
+      "density": 0.684,
+      "smiles": "CCCCCCC",
+      "notes": "分子式: C7H16 ／ InChI: InChI=1S/C7H16/c1-3-5-7-6-4-2/h3-7H2,1-2H3 ／ 沸点: 98.4 °C ／ 融点: -90.6 °C ／ 密度: 0.684 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "シクロヘキサン (Cyclohexane)",
+      "cas_number": "",
+      "molecular_weight": 84.16,
+      "purity": null,
+      "density": 0.779,
+      "smiles": "C1CCCCC1",
+      "notes": "分子式: C6H12 ／ InChI: InChI=1S/C6H12/c1-2-4-6-5-3-1/h1-6H2 ／ 沸点: 80.7 °C ／ 融点: 6.5 °C ／ 密度: 0.779 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ペンタン (Pentane)",
+      "cas_number": "",
+      "molecular_weight": 72.15,
+      "purity": null,
+      "density": 0.626,
+      "smiles": "CCCCC",
+      "notes": "分子式: C5H12 ／ InChI: InChI=1S/C5H12/c1-3-5-4-2/h3-5H2,1-2H3 ／ 沸点: 36.1 °C ／ 融点: -129.7 °C ／ 密度: 0.626 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "酢酸エチル (Ethyl acetate)",
+      "cas_number": "",
+      "molecular_weight": 88.11,
+      "purity": null,
+      "density": 0.902,
+      "smiles": "CCOC(C)=O",
+      "notes": "分子式: C4H8O2 ／ InChI: InChI=1S/C4H8O2/c1-3-6-4(2)5/h3H2,1-2H3 ／ 沸点: 77.1 °C ／ 融点: -83.6 °C ／ 密度: 0.902 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "酢酸イソプロピル (Isopropyl acetate)",
+      "cas_number": "",
+      "molecular_weight": 102.13,
+      "purity": null,
+      "density": 0.872,
+      "smiles": "CC(C)OC(C)=O",
+      "notes": "分子式: C5H10O2 ／ InChI: InChI=1S/C5H10O2/c1-4(2)7-5(3)6/h4H,1-3H3 ／ 沸点: 88.7 °C ／ 融点: -73 °C ／ 密度: 0.872 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "酢酸ブチル (n-Butyl acetate)",
+      "cas_number": "",
+      "molecular_weight": 116.16,
+      "purity": null,
+      "density": 0.882,
+      "smiles": "CCCCOC(C)=O",
+      "notes": "分子式: C6H12O2 ／ InChI: InChI=1S/C6H12O2/c1-3-4-5-8-6(2)7/h3-5H2,1-2H3 ／ 沸点: 126.1 °C ／ 融点: -77.9 °C ／ 密度: 0.882 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "メチルエチルケトン (Methyl ethyl ketone / 2-Butanone)",
+      "cas_number": "",
+      "molecular_weight": 72.11,
+      "purity": null,
+      "density": 0.805,
+      "smiles": "CCC(C)=O",
+      "notes": "分子式: C4H8O ／ InChI: InChI=1S/C4H8O/c1-3-4(2)5/h3H2,1-2H3 ／ 沸点: 79.6 °C ／ 融点: -86 °C ／ 密度: 0.805 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "メチルイソブチルケトン (Methyl isobutyl ketone / MIBK)",
+      "cas_number": "",
+      "molecular_weight": 100.16,
+      "purity": null,
+      "density": 0.802,
+      "smiles": "CC(C)CC(C)=O",
+      "notes": "分子式: C6H12O ／ InChI: InChI=1S/C6H12O/c1-5(2)4-6(3)7/h5H,4H2,1-3H3 ／ 沸点: 116.5 °C ／ 融点: -84.7 °C ／ 密度: 0.802 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ピリジン (Pyridine)",
+      "cas_number": "",
+      "molecular_weight": 79.1,
+      "purity": null,
+      "density": 0.982,
+      "smiles": "c1ccncc1",
+      "notes": "分子式: C5H5N ／ InChI: InChI=1S/C5H5N/c1-2-4-6-5-3-1/h1-5H ／ 沸点: 115.2 °C ／ 融点: -41.6 °C ／ 密度: 0.982 g/mL (20 °C) ／ 分類: 溶媒／塩基。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "トリエチルアミン (Triethylamine)",
+      "cas_number": "",
+      "molecular_weight": 101.19,
+      "purity": null,
+      "density": 0.726,
+      "smiles": "CCN(CC)CC",
+      "notes": "分子式: C6H15N ／ InChI: InChI=1S/C6H15N/c1-4-7(5-2)6-3/h4-6H2,1-3H3 ／ 沸点: 89.5 °C ／ 融点: -114.8 °C ／ 密度: 0.726 g/mL (20 °C) ／ 分類: 溶媒／塩基。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "酢酸 (Acetic acid)",
+      "cas_number": "",
+      "molecular_weight": 60.05,
+      "purity": null,
+      "density": 1.049,
+      "smiles": "CC(=O)O",
+      "notes": "分子式: C2H4O2 ／ InChI: InChI=1S/C2H4O2/c1-2(3)4/h1H3,(H,3,4) ／ 沸点: 118.1 °C ／ 融点: 16.6 °C ／ 密度: 1.049 g/mL (20 °C) ／ 分類: 溶媒／酸。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ギ酸 (Formic acid)",
+      "cas_number": "",
+      "molecular_weight": 46.02,
+      "purity": null,
+      "density": 1.22,
+      "smiles": "O=CO",
+      "notes": "分子式: CH2O2 ／ InChI: InChI=1S/CH2O2/c2-1-3/h1H,(H,2,3) ／ 沸点: 100.8 °C ／ 融点: 8.4 °C ／ 密度: 1.22 g/mL (20 °C) ／ 分類: 溶媒／酸。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "クロロベンゼン (Chlorobenzene)",
+      "cas_number": "",
+      "molecular_weight": 112.56,
+      "purity": null,
+      "density": 1.106,
+      "smiles": "Clc1ccccc1",
+      "notes": "分子式: C6H5Cl ／ InChI: InChI=1S/C6H5Cl/c7-6-4-2-1-3-5-6/h1-5H ／ 沸点: 131.7 °C ／ 融点: -45.6 °C ／ 密度: 1.106 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "ニトロメタン (Nitromethane)",
+      "cas_number": "",
+      "molecular_weight": 61.04,
+      "purity": null,
+      "density": 1.132,
+      "smiles": "C[N+](=O)[O-]",
+      "notes": "分子式: CH3NO2 ／ InChI: InChI=1S/CH3NO2/c1-2(3)4/h1H3 ／ 沸点: 101.2 °C ／ 融点: -29 °C ／ 密度: 1.132 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "炭酸プロピレン (Propylene carbonate)",
+      "cas_number": "",
+      "molecular_weight": 102.09,
+      "purity": null,
+      "density": 1.204,
+      "smiles": "CC1COC(=O)O1",
+      "notes": "分子式: C4H6O3 ／ InChI: InChI=1S/C4H6O3/c1-3-2-6-4(5)7-3/h3H,2H2,1H3 ／ 沸点: 242 °C ／ 融点: -49 °C ／ 密度: 1.204 g/mL (20 °C) ／ 分類: 溶媒。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    },
+    {
+      "name": "酢酸トリエチルアンモニウム (Triethylammonium acetate)",
+      "cas_number": "",
+      "molecular_weight": 161.24,
+      "purity": null,
+      "density": null,
+      "smiles": "CCN(CC)CC.CC(=O)O",
+      "notes": "分子式: C8H19NO2 ／ 分類: サンプル生成物／カルボン酸アンモニウム塩 ／ トリエチルアミンと酢酸から生成するサンプル生成物。初期プリセット値です。グレード・水和物／溶液の状態・供給元によって変わります。実際に使う前に供給元のSDS／CoAで確認してください。"
+    }
+  ]
+}
