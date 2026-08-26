@@ -357,6 +357,33 @@ test('config.yml: 白紙Issueを許し、サイト・デモ・脆弱性窓口へ
   }
 });
 
+// -------------------------------------------------- 窓口の振り分け（2026-08-26の決定）
+//
+// 用途で分ける: 日本語の質問・相談はDiscordのコミュニティ、不具合・要望はIssue（日本語可）、
+// 脆弱性はSecurity Advisory。英語はIssueが主な窓口（Discordは日本語で運営しているため）。
+// 決めただけでは戻るので、README と config.yml の両方をここで機械検査する。
+
+const DISCORD_INVITE = 'https://discord.gg/VzKjRGtzm';
+
+test('config.yml: 日本語の質問先としてDiscordの入口がある', () => {
+  const rel = `${TEMPLATE_DIR}/config.yml`;
+  const config = parseYaml(read(rel), rel);
+  const discord = config.contact_links.filter((l) => String(l.url).includes('discord.gg'));
+  assert.equal(discord.length, 1, 'Discordの入口が1本でない');
+  assert.equal(discord[0].url, DISCORD_INVITE, '招待URLが正本と違う（旧リンクを撒いていないか）');
+  assert.match(discord[0].about, /実験データ/, '実データを貼らない注意が入口に無い');
+});
+
+test('READMEが窓口を用途で振り分けている（日英とも）', () => {
+  const readme = read('README.md');
+  assert.ok(readme.includes(DISCORD_INVITE), 'READMEにDiscordの招待URLが無い');
+  assert.match(readme, /https:\/\/github\.com\/erlen-eln\/erlen\/issues/, 'READMEにIssuesへの導線が無い');
+  assert.match(readme, /実験データそのもの/, '日本語側に実データを貼らない注意が無い');
+  assert.match(readme, /do not paste real experimental data/, '英語側に実データを貼らない注意が無い');
+  // 英語の窓口はIssuesに固定する（英語話者をDiscordへ誘導しない）
+  assert.match(readme, /In English, GitHub Issues is the place/, '英語の主窓口がIssuesだと明示されていない');
+});
+
 // ---------------------------------------------------------------- PRテンプレート
 
 test('PRテンプレートに設計の掟がチェック項目として載っている', () => {

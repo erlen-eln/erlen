@@ -1,7 +1,15 @@
 # Issueを開くときに出る入口の一覧。
 # blank_issues_enabled: true — 型に合わない話（質問・使い方・翻訳の相談）を閉め出さない。
+#
+# 窓口は用途で分けている（2026-08-26）。日本語の質問・相談はDiscord、
+# 不具合と要望はIssue（日本語可）、脆弱性はSecurity Advisory。
+# 英語はIssueが主な窓口（Discordは日本語のコミュニティのため）。
 blank_issues_enabled: true
 contact_links:
+  - name: Questions in Japanese / 日本語で質問する
+    url: https://discord.gg/VzKjRGtzm
+    about: Japanese-speaking community with a room for Erlen. 使い方の質問・導入の相談はこちらへ（実験データは貼らないでください）。
+
   - name: Erlen website / 公式サイト
     url: https://erlen.jp
     about: Overview, setup guide and changelog. 製品の概要・導入手順・変更履歴。

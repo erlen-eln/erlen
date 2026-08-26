@@ -108,6 +108,9 @@ node --test --test-name-pattern="収率"      # 名前で絞る
 ### Issueを出すとき
 
 - 不具合・要望は <https://github.com/erlen-eln/erlen/issues> へ。テンプレートがあります
+- **使い方の質問・導入の相談は Discord のコミュニティ「創星」**（`🧪｜erlen` 部屋）へどうぞ:
+  <https://discord.gg/VzKjRGtzm>。Issueにするほどでもない話はこちらのほうが早いです
+- Discordでもここでも、**実験データそのもの（化合物名・反応条件・生データ）は貼らないでください**
 - **秘密の値と未公開の研究データを貼らないでください。** シークレット・セッションCookie・
   D1の `database_id`・ページ本文・添付は、報告に必要ありません
 - **脆弱性はIssueにしないでください。** [SECURITY.md](SECURITY.md) の手順（GitHubの非公開の
@@ -212,6 +215,10 @@ No CLA is required.
 ### Filing an issue
 
 - Bugs and requests: <https://github.com/erlen-eln/erlen/issues> (templates provided)
+- **In English, issues are also the place for questions** — how to set it up, how something is meant
+  to work, whether an idea fits. A blank issue is fine
+- There is a Japanese-speaking community on Discord (<https://discord.gg/VzKjRGtzm>) with a room for
+  Erlen, but it is run in Japanese
 - **Never paste secrets or unpublished research data** — not the client secret, not a session
   cookie, not the D1 `database_id`, not page contents or attachments
 - **Vulnerabilities do not belong in issues.** Follow [SECURITY.md](SECURITY.md) and use GitHub's

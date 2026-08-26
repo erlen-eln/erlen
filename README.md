@@ -127,18 +127,29 @@ npm exec -- wrangler deploy  # 固定済みWranglerで本体をデプロイ
 node scripts/package.mjs     # 配布zipを作る（テストが緑のときだけ）
 ```
 
-### 貢献・不具合の報告
+### 質問・不具合の報告
 
 手引きは [CONTRIBUTING.md](CONTRIBUTING.md)、脆弱性の報告先は [SECURITY.md](SECURITY.md)、
 これからの見通しは [ROADMAP.md](ROADMAP.md) にあります。**日本語で書いていただいて構いません。**
 
-- 不具合・要望は **GitHub Issues** へお願いします: <https://github.com/erlen-eln/erlen/issues>
+用途で窓口を分けています。
+
+| 相談したいこと | 行き先 |
+|---|---|
+| 使い方の質問・導入の相談・雑談 | Discordのコミュニティ「創星」の `🧪｜erlen` 部屋: <https://discord.gg/VzKjRGtzm> |
+| 不具合の報告・機能の要望 | GitHub Issues: <https://github.com/erlen-eln/erlen/issues>（日本語で構いません） |
+| 脆弱性の報告 | GitHubのSecurity Advisory（公開Issueにする前に、非公開でお知らせください） |
+
+「創星」はAIで研究や仕事を効率化する人たちのコミュニティで、その中にErlen専用の部屋があります。
+入れてみたいが最初の一歩で詰まりそう、というくらいの話から歓迎です。
+ただし **実験データそのもの（化合物名・反応条件・生データ）は貼らないでください。**
+画面をお見せいただくときは、写っている記録にマスクをお願いします。
+
 - Pull Request も歓迎します。送っていただいた変更は Apache License 2.0 の
   §5（Submission of Contributions）に従って本プロジェクトへ取り込まれます
 - 送る前に **`npm test` が全緑**であることを確認してください。テストの本数は減らさない約束です
 - 画面（`web/`）を直したときは `npm run build:web` を実行し、`public/app/` も一緒にコミットしてください
   （利用者はビルドせずに使えるようにしてあります）
-- セキュリティ上の問題は、公開Issueにする前に GitHub の Security Advisory 機能から非公開でお知らせください
 
 ### ライセンス
 
@@ -251,19 +262,30 @@ npm exec -- wrangler deploy  # deploy with the pinned Wrangler
 node scripts/package.mjs     # build a distributable zip (only when tests are green)
 ```
 
-### Contributing
+### Questions and contributions
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, [SECURITY.md](SECURITY.md) for reporting
 vulnerabilities and [ROADMAP.md](ROADMAP.md) for what is being considered next.
 **Japanese is welcome** in issues and pull requests.
 
-- Bugs and requests: <https://github.com/erlen-eln/erlen/issues>
+| What you want | Where to go |
+|---|---|
+| Questions, setup help, bugs, feature requests | GitHub Issues: <https://github.com/erlen-eln/erlen/issues> |
+| Security problems | GitHub's private Security Advisory, never a public issue |
+
+**In English, GitHub Issues is the place** — for questions as much as for bugs. A blank issue is fine;
+"I would like to run this and I expect to get stuck at the first step" is a perfectly good one.
+There is also a Japanese-speaking community on Discord with a room for Erlen
+(<https://discord.gg/VzKjRGtzm>), but it is run in Japanese.
+
+Wherever you write, please do not paste real experimental data — compound names, conditions or raw
+records. Mask anything visible in a screenshot.
+
 - Pull requests are welcome. Contributions are taken into the project under
   Apache License 2.0 §5 (Submission of Contributions)
 - Make sure **`npm test` is fully green** before you send one; the test count is never reduced
 - If you change the interface (`web/`), run `npm run build:web` and commit `public/app/` as well,
   so users never have to build
-- For security problems, please use GitHub's private Security Advisory rather than a public issue
 
 ### License
 
