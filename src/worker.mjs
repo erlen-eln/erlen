@@ -8,7 +8,10 @@ import {
   verifyGoogleIdToken, newToken,
   SESSION_COOKIE, STATE_COOKIE, NEXT_COOKIE, SESSION_TTL_MS,
 } from './auth.mjs';
-import { loadContext, resolveLogin } from './session.mjs';
+import { loadContext, ownerTenantId, resolveLogin } from './session.mjs';
+import { actorOf, recordAudit } from './audit.mjs';
+import { exportAuditEvents, listAuditEvents, listPageAudit } from './api/audit.mjs';
+import { getPageRevision, listPageRevisions } from './api/revisions.mjs';
 import { health } from './api/health.mjs';
 import {
   createInvitation, listMembers, patchMember, removeMember, revokeInvitation,
@@ -85,6 +88,18 @@ function htmlResponse(html) {
   });
 }
 
+// 監査証跡のエクスポート用。1行1事象（JSON Lines）をそのまま返す
+function jsonlResponse(lines) {
+  return new Response(lines.length ? `${lines.join('\n')}\n` : '', {
+    status: 200,
+    headers: {
+      'content-type': 'application/x-ndjson; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+    },
+  });
+}
+
 // Cookieの共通属性。HttpOnly（JSから読めない）＋Secure（HTTPSのみ）＋SameSite=Lax（CSRF対策）
 const COOKIE_FLAGS = 'Path=/; HttpOnly; Secure; SameSite=Lax';
 
@@ -97,6 +112,22 @@ async function readJson(request) {
 }
 
 // ---- Googleログイン ----------------------------------------------------
+// ログインまわりの監査記録。まだctxが無い場面なので actor は自分で組み立てる。
+// 書き先のテナントは ownerTenantId で引く（単一テナント前提）。オーナー行がまだ無い
+// （＝誰も入ったことが無い）ときは書き先が無いので記録しない。
+// 🔴記録に失敗してもログイン自体は止めない（握りつぶし。痕跡はログにだけ残す）
+async function auditAuth(env, request, nowMs, ev, email = '') {
+  try {
+    const tenantId = await ownerTenantId(env);
+    if (!tenantId) return;
+    await recordAudit(env, {
+      userId: 'anonymous', email, requestId: request.headers.get('cf-ray') ?? '',
+    }, tenantId, ev, new Date(nowMs).toISOString());
+  } catch (e) {
+    console.error('erlen audit auth failed', e?.message);
+  }
+}
+
 async function handleAuth(request, env, url, nowMs) {
   const { pathname } = url;
 
@@ -140,6 +171,9 @@ async function handleAuth(request, env, url, nowMs) {
     });
     if (!tokenRes.ok) {
       console.error('erlen google token exchange failed', tokenRes.status);
+      await auditAuth(env, request, nowMs, {
+        action: 'auth.login_error', targetType: 'session', after: { stage: 'token' },
+      });
       return back('?login=error');
     }
     let claims;
@@ -151,13 +185,26 @@ async function handleAuth(request, env, url, nowMs) {
         nowMs,
       });
     } catch {
+      await auditAuth(env, request, nowMs, {
+        action: 'auth.login_error', targetType: 'session', after: { stage: 'claims' },
+      });
       return back('?login=error');
     }
-    if (!claims) return back('?login=error');
+    if (!claims) {
+      await auditAuth(env, request, nowMs, {
+        action: 'auth.login_error', targetType: 'session', after: { stage: 'claims' },
+      });
+      return back('?login=error');
+    }
 
     const email = String(claims.email ?? '').toLowerCase();
     // メール確認済みでないGoogleアカウントは、そもそも本人性が担保できないので通さない
-    if (!claims.email_verified) return back('?login=denied');
+    if (!claims.email_verified) {
+      await auditAuth(env, request, nowMs, {
+        action: 'auth.login_denied', targetType: 'session', after: { email },
+      }, email);
+      return back('?login=denied');
+    }
 
     // オーナー本人／既存メンバー／招待の受諾のどれかなら成立。判定は session.mjs（純関数つき）。
     // DEMO_MODE="1"（公開デモ機だけ）のときは、どれにも当たらない人を閲覧専用として通す
@@ -165,13 +212,31 @@ async function handleAuth(request, env, url, nowMs) {
       sub: String(claims.sub),
       email,
       name: String(claims.name ?? ''),
-    }, new Date(nowMs).toISOString(), { demoMode: env.DEMO_MODE === '1' });
+    }, new Date(nowMs).toISOString(), {
+      demoMode: env.DEMO_MODE === '1',
+      requestId: request.headers.get('cf-ray') ?? '',
+    });
     if (!login.ok) {
       // メールは一致するがGoogleのsubが違う＝別アカウントでの成りすまし。
       // 画面へ戻さず、その場で断る（何が起きたか分かるように理由も返す）
-      if (login.status === 403) return json({ error: 'forbidden', reason: login.reason }, 403);
+      if (login.status === 403) {
+        await auditAuth(env, request, nowMs, {
+          action: 'auth.login_forbidden', targetType: 'session', after: { email },
+        }, email);
+        return json({ error: 'forbidden', reason: login.reason }, 403);
+      }
+      await auditAuth(env, request, nowMs, {
+        action: 'auth.login_denied', targetType: 'session', after: { email },
+      }, email);
       return back('?login=denied');
     }
+
+    // 成立の直前に記録（bootstrap/accept 分の書き込みは resolveLogin の中で監査済み。
+    // ここで残すのは「ログインが成立した」という事象そのもの）
+    await auditAuth(env, request, nowMs, {
+      action: 'auth.login', targetType: 'session',
+      after: { sub: String(claims.sub), demo: login.session?.demo === true },
+    }, email);
 
     // デモで通った人のCookieには demo の印を入れる（users行が無いので、これが唯一の身元）
     const value = await signSession(
@@ -187,6 +252,20 @@ async function handleAuth(request, env, url, nowMs) {
   }
 
   if (request.method === 'POST' && pathname === '/auth/logout') {
+    // ログアウトも監査に残す。loadContext が通る（＝まだ有効なセッションの）ときだけ。
+    // 失効済み・無いセッションでのログアウトは無害なので記録しない
+    const sess = await loadContext(request, env, nowMs);
+    if (sess.ok) {
+      sess.ctx.requestId = request.headers.get('cf-ray') ?? '';
+      try {
+        await recordAudit(env, actorOf(sess.ctx), sess.ctx.tenantId, {
+          action: 'auth.logout', targetType: 'session',
+        }, new Date(nowMs).toISOString());
+      } catch (e) {
+        // 監査の失敗でログアウトを止めない（握りつぶし。痕跡はログにだけ残す）
+        console.error('erlen audit logout failed', e?.message);
+      }
+    }
     const headers = new Headers({ 'content-type': 'application/json; charset=utf-8' });
     headers.append('set-cookie', `${SESSION_COOKIE}=; Max-Age=0; ${COOKIE_FLAGS}`);
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
@@ -280,6 +359,22 @@ async function handleApi(request, env, url, seg, ctx) {
       return await putProjectMembers(env, ctx, seg[2], parsed.body);
     }
     return { status: 405, data: { error: 'method_not_allowed' } };
+  }
+
+  // ---- 監査証跡（全体の閲覧とエクスポートはオーナーだけ） ----
+  if (seg[1] === 'audit') {
+    if (ctx.role !== 'owner') return { status: 403, data: { error: 'forbidden' } };
+    if (seg.length === 2) {
+      if (method !== 'GET') return { status: 405, data: { error: 'method_not_allowed' } };
+      return await listAuditEvents(env, ctx, url.searchParams);
+    }
+    if (seg.length === 3 && seg[2] === 'export') {
+      if (method !== 'GET') return { status: 405, data: { error: 'method_not_allowed' } };
+      const out = await exportAuditEvents(env, ctx, url.searchParams);
+      // JSONLはJSONに載せられないので、ここでResponseを組む（htmlResponseと同じ扱い）
+      return out.status === 200 ? jsonlResponse(out.data.lines) : out;
+    }
+    return { status: 404, data: { error: 'not_found' } };
   }
 
   // /api/pubchem?type=cas|name|smiles&q=...（試薬の分子量などの自動補完）
@@ -419,6 +514,22 @@ async function handleApi(request, env, url, seg, ctx) {
     return { status: 405, data: { error: 'method_not_allowed' } };
   }
 
+  // /api/pages/:id/audit（そのページが見える人だけ）
+  if (seg.length === 4 && seg[1] === 'pages' && seg[3] === 'audit') {
+    if (method !== 'GET') return { status: 405, data: { error: 'method_not_allowed' } };
+    return await listPageAudit(env, ctx, seg[2], url.searchParams);
+  }
+
+  // /api/pages/:id/revisions（一覧）と /api/pages/:id/revisions/:revNo（本文）
+  if (seg.length === 4 && seg[1] === 'pages' && seg[3] === 'revisions') {
+    if (method !== 'GET') return { status: 405, data: { error: 'method_not_allowed' } };
+    return await listPageRevisions(env, ctx, seg[2]);
+  }
+  if (seg.length === 5 && seg[1] === 'pages' && seg[3] === 'revisions') {
+    if (method !== 'GET') return { status: 405, data: { error: 'method_not_allowed' } };
+    return await getPageRevision(env, ctx, seg[2], seg[4]);
+  }
+
   // /api/pages/:id/report（印刷用HTML。JSONではないのでここでResponseを組む）
   if (seg.length === 4 && seg[1] === 'pages' && seg[3] === 'report') {
     if (method !== 'GET') return { status: 405, data: { error: 'method_not_allowed' } };
@@ -445,6 +556,8 @@ export default {
     if (pathname === '/api' || pathname.startsWith('/api/')) {
       const sess = await loadContext(request, env, nowMs);
       if (!sess.ok) return json({ error: sess.error }, sess.status);
+      // Cloudflareのcf-rayを監査証跡のrequest_idに載せる（api層はrequestを受け取らない設計なので、ここで入れる）
+      sess.ctx.requestId = request.headers.get('cf-ray') ?? '';
       // 閲覧専用（viewer）は書き込みを一切通さない。
       // 個々のAPIには権限チェックを書かず、この1行に寄せる（書き漏らしを構造で防ぐ）
       if (sess.ctx.role === 'viewer' && request.method !== 'GET') {

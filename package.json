@@ -12,6 +12,7 @@
     "test": "node --test \"test/**/*.test.mjs\"",
     "doctor": "node scripts/doctor.mjs",
     "doctor:remote": "node scripts/doctor.mjs --remote",
+    "verify-audit": "node scripts/verify-audit.mjs",
     "package": "node scripts/package.mjs",
     "changelog": "node scripts/render-changelog.mjs",
     "prepare:rdkit": "node scripts/copy-rdkit.mjs",

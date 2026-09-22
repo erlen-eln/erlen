@@ -6,6 +6,7 @@
 // 招待を作ったら、相手に「そのアドレスのGoogleアカウントで /auth/login からログインして」と
 // 口頭・チャットで伝えてもらう。初回ログインのときに /auth/callback が招待を見つけて受諾する。
 import { ulid } from '../ulid.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 // 招待で渡せる権限。invitations.role のCHECK（migrations/0002_members.sql）と揃える。
 // オーナーは招待では渡さない（参加してもらってから昇格させる）
@@ -106,10 +107,14 @@ export async function createInvitation(env, ctx, body, nowIso = new Date().toISO
   if (pending) return { status: 409, data: { error: 'already_invited' } };
 
   const id = ulid();
-  await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `INSERT INTO invitations (id, tenant_id, email, role, invited_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(id, ctx.tenantId, email, role, ctx.userId, nowIso).run();
+  ).bind(id, ctx.tenantId, email, role, ctx.userId, nowIso);
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'invitation.create', targetType: 'invitation', targetId: id,
+    after: { email, role },
+  }, nowIso);
 
   return {
     status: 201,
@@ -130,11 +135,21 @@ export async function createInvitation(env, ctx, body, nowIso = new Date().toISO
 
 // 招待の取り消し。行は消さず revoked_at を刻む（誰をいつ招待したかの記録を残すため）
 export async function revokeInvitation(env, ctx, id, nowIso = new Date().toISOString()) {
-  const res = await env.DB.prepare(
+  // 監査の before を取るために先に対象行を引く（無ければ従来どおり404）
+  const current = await env.DB.prepare(
+    `SELECT id, email FROM invitations
+      WHERE id = ? AND tenant_id = ? AND accepted_at IS NULL AND revoked_at IS NULL`
+  ).bind(id, ctx.tenantId).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+  const stmt = env.DB.prepare(
     `UPDATE invitations SET revoked_at = ?
       WHERE id = ? AND tenant_id = ? AND accepted_at IS NULL AND revoked_at IS NULL`
-  ).bind(nowIso, id, ctx.tenantId).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(nowIso, id, ctx.tenantId);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'invitation.revoke', targetType: 'invitation', targetId: id,
+    before: { id: current.id, email: current.email },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id } };
 }
 
@@ -162,10 +177,25 @@ export async function patchMember(env, ctx, id, body, nowIso = new Date().toISOS
 
   const grantedAt = role === 'owner' ? (target.owner_granted_at ?? nowIso) : null;
   const grantedBy = role === 'owner' ? ctx.userId : null;
-  await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `UPDATE users SET role = ?, owner_granted_by = ?, owner_granted_at = ?
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(role, grantedBy, grantedAt, id, ctx.tenantId).run();
+  ).bind(role, grantedBy, grantedAt, id, ctx.tenantId);
+  // オーナー昇格は専用のactionにする（昇格と普通の権限変更を混ぜない）
+  const ev = role === 'owner'
+    ? {
+      action: 'member.promote_owner',
+      before: { role: target.role, owner_granted_at: target.owner_granted_at ?? null },
+      after: { role, owner_granted_at: grantedAt },
+    }
+    : {
+      action: 'member.role_change',
+      before: { role: target.role },
+      after: { role },
+    };
+  await commitWithAudit(env, ctx, [stmt], {
+    ...ev, targetType: 'user', targetId: id,
+  }, nowIso);
   return {
     status: 200,
     data: {
@@ -194,8 +224,12 @@ export async function removeMember(env, ctx, id, nowIso = new Date().toISOString
   if (isPrimaryOwner(env, target.email) || target.id === ctx.userId) {
     return { status: 409, data: { error: 'owner_immutable' } };
   }
-  await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `UPDATE users SET deleted_at = ? WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, id, ctx.tenantId).run();
+  ).bind(nowIso, id, ctx.tenantId);
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'member.remove', targetType: 'user', targetId: id,
+    before: { email: target.email, role: target.role },
+  }, nowIso);
   return { status: 200, data: { ok: true, id } };
 }

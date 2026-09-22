@@ -6,6 +6,7 @@
 // 見えないノートブックは 403 ではなく 404 を返す（存在ごと隠す）。
 import { ulid } from '../ulid.mjs';
 import { notebookVisibility } from '../access.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 const COLUMNS = 'id, title, description, project_id, sort_order, created_at, updated_at';
 
@@ -54,12 +55,16 @@ export async function createNotebook(env, ctx, body, nowIso = new Date().toISOSt
   const project = await resolveProjectId(env, ctx, body?.project_id);
   if (!project.ok) return { status: 400, data: { error: 'project_not_found' } };
   const id = ulid();
-  await env.DB.prepare(
+  const description = text(body?.description);
+  const stmt = env.DB.prepare(
     `INSERT INTO notebooks
        (id, tenant_id, user_id, title, description, project_id, sort_order, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(id, ctx.tenantId, ctx.userId, title, text(body?.description), project.id, 0, nowIso, nowIso)
-    .run();
+  ).bind(id, ctx.tenantId, ctx.userId, title, description, project.id, 0, nowIso, nowIso);
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'notebook.create', targetType: 'notebook', targetId: id,
+    after: { title, description, project_id: project.id, sort_order: 0 },
+  }, nowIso);
   return await getNotebook(env, ctx, id).then((r) => ({ ...r, status: 201 }));
 }
 
@@ -68,41 +73,60 @@ export async function patchNotebook(env, ctx, id, body, nowIso = new Date().toIS
   // 当てずっぽうで叩かれたときに「更新できた／できない」で存在が漏れる
   const current = await getNotebook(env, ctx, id);
   if (current.status !== 200) return current;
+  const nb = current.data.notebook;
 
   const sets = [];
   const args = [];
+  // 監査の before/after には「変わった列」だけを入れる
+  const before = {};
+  const after = {};
   if (body?.title !== undefined) {
     const title = text(body.title, 200);
     if (!title) return { status: 400, data: { error: 'title_required' } };
     sets.push('title = ?');
     args.push(title);
+    if (title !== nb.title) { before.title = nb.title; after.title = title; }
   }
   if (body?.description !== undefined) {
+    const description = text(body.description);
     sets.push('description = ?');
-    args.push(text(body.description));
+    args.push(description);
+    if (description !== (nb.description ?? '')) {
+      before.description = nb.description ?? '';
+      after.description = description;
+    }
   }
   if (body?.project_id !== undefined) {
     const project = await resolveProjectId(env, ctx, body.project_id);
     if (!project.ok) return { status: 400, data: { error: 'project_not_found' } };
     sets.push('project_id = ?');
     args.push(project.id);
+    if (project.id !== (nb.project_id ?? null)) {
+      before.project_id = nb.project_id ?? null;
+      after.project_id = project.id;
+    }
   }
   if (body?.sort_order !== undefined) {
+    const sortOrder = Number.isFinite(Number(body.sort_order)) ? Math.trunc(Number(body.sort_order)) : 0;
     sets.push('sort_order = ?');
-    args.push(Number.isFinite(Number(body.sort_order)) ? Math.trunc(Number(body.sort_order)) : 0);
+    args.push(sortOrder);
+    if (sortOrder !== nb.sort_order) { before.sort_order = nb.sort_order; after.sort_order = sortOrder; }
   }
   if (!sets.length) return { status: 400, data: { error: 'no_fields' } };
   sets.push('updated_at = ?');
   args.push(nowIso, id, ctx.tenantId);
-  const res = await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `UPDATE notebooks SET ${sets.join(', ')}
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(...args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(...args);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'notebook.update', targetType: 'notebook', targetId: id, before, after,
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   // プロジェクトを付け替えた直後は自分から見えなくなっていることがある（オーナー以外）。
   // その場合も更新自体は成功しているので、素っ気なく ok だけ返す
-  const after = await getNotebook(env, ctx, id);
-  return after.status === 200 ? after : { status: 200, data: { ok: true, id } };
+  const fresh = await getNotebook(env, ctx, id);
+  return fresh.status === 200 ? fresh : { status: 200, data: { ok: true, id } };
 }
 
 // 論理削除。実験ノートは物理削除しない（deleted_atを入れるだけ）。
@@ -110,14 +134,20 @@ export async function patchNotebook(env, ctx, id, body, nowIso = new Date().toIS
 export async function deleteNotebook(env, ctx, id, nowIso = new Date().toISOString()) {
   const current = await getNotebook(env, ctx, id);
   if (current.status !== 200) return current;
-  const res = await env.DB.prepare(
-    `UPDATE notebooks SET deleted_at = ?, updated_at = ?
-      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, nowIso, id, ctx.tenantId).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
-  await env.DB.prepare(
-    `UPDATE pages SET deleted_at = ?, updated_at = ?
-      WHERE notebook_id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, nowIso, id, ctx.tenantId).run();
+  const nb = current.data.notebook;
+  const { results } = await commitWithAudit(env, ctx, [
+    env.DB.prepare(
+      `UPDATE notebooks SET deleted_at = ?, updated_at = ?
+        WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
+    ).bind(nowIso, nowIso, id, ctx.tenantId),
+    env.DB.prepare(
+      `UPDATE pages SET deleted_at = ?, updated_at = ?
+        WHERE notebook_id = ? AND tenant_id = ? AND deleted_at IS NULL`
+    ).bind(nowIso, nowIso, id, ctx.tenantId),
+  ], {
+    action: 'notebook.delete', targetType: 'notebook', targetId: id,
+    before: { title: nb.title, project_id: nb.project_id ?? null },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id } };
 }

@@ -6,6 +6,7 @@
 // 作成・変更・メンバー設定はオーナー専用（可否の判定は worker.mjs 側でまとめて行う）。
 import { ulid } from '../ulid.mjs';
 import { projectVisibility } from '../access.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 const COLUMNS = 'p.id, p.name, p.description, p.created_at, p.updated_at';
 
@@ -61,54 +62,94 @@ export async function createProject(env, ctx, body, nowIso = new Date().toISOStr
   const name = text(body?.name, 200);
   if (!name) return { status: 400, data: { error: 'name_required' } };
   const id = ulid();
-  await env.DB.prepare(
+  const description = text(body?.description);
+  const stmt = env.DB.prepare(
     `INSERT INTO projects (id, tenant_id, name, description, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(id, ctx.tenantId, name, text(body?.description), nowIso, nowIso).run();
+  ).bind(id, ctx.tenantId, name, description, nowIso, nowIso);
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'project.create', targetType: 'project', targetId: id,
+    after: { name, description },
+  }, nowIso);
   const created = await getProject(env, ctx, id);
   return { ...created, status: 201 };
 }
 
 export async function patchProject(env, ctx, id, body, nowIso = new Date().toISOString()) {
+  // before を取るために先に現在行を引く（見えないプロジェクトはここで404＝存在ごと隠す）
+  const vis = projectVisibility(ctx, 'p');
+  const current = await env.DB.prepare(
+    `SELECT ${COLUMNS}
+       FROM projects p
+      WHERE p.id = ? AND p.tenant_id = ? AND p.deleted_at IS NULL${vis.sql}`
+  ).bind(id, ctx.tenantId, ...vis.args).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+
   const sets = [];
   const args = [];
+  // 監査の before/after には「変わった列」だけを入れる
+  const before = {};
+  const after = {};
   if (body?.name !== undefined) {
     const name = text(body.name, 200);
     if (!name) return { status: 400, data: { error: 'name_required' } };
     sets.push('name = ?');
     args.push(name);
+    if (name !== current.name) { before.name = current.name; after.name = name; }
   }
   if (body?.description !== undefined) {
+    const description = text(body.description);
     sets.push('description = ?');
-    args.push(text(body.description));
+    args.push(description);
+    if (description !== (current.description ?? '')) {
+      before.description = current.description ?? '';
+      after.description = description;
+    }
   }
   if (!sets.length) return { status: 400, data: { error: 'no_fields' } };
   sets.push('updated_at = ?');
   args.push(nowIso, id, ctx.tenantId);
-  const res = await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `UPDATE projects SET ${sets.join(', ')}
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(...args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(...args);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'project.update', targetType: 'project', targetId: id, before, after,
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return await getProject(env, ctx, id);
 }
 
 // 論理削除。配下のノートブックは消さず、project_id を外して「プロジェクトなし」に戻す。
 // プロジェクトを畳んだだけで実験記録が誰からも見えなくなる、という事故を起こさないため
 export async function deleteProject(env, ctx, id, nowIso = new Date().toISOString()) {
-  const res = await env.DB.prepare(
-    `UPDATE projects SET deleted_at = ?, updated_at = ?
-      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, nowIso, id, ctx.tenantId).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
-  await env.DB.batch([
+  // before を取るために先に現在行を引く（見えないプロジェクトはここで404）
+  const vis = projectVisibility(ctx, 'p');
+  const current = await env.DB.prepare(
+    `SELECT ${COLUMNS}
+       FROM projects p
+      WHERE p.id = ? AND p.tenant_id = ? AND p.deleted_at IS NULL${vis.sql}`
+  ).bind(id, ctx.tenantId, ...vis.args).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+
+  // プロジェクトの伏せ・ノートブックの project_id 外し・メンバー行の削除は
+  // 1つの監査付きバッチで行う（途中で止まっても証跡だけ残る状態を作らない）
+  const { results } = await commitWithAudit(env, ctx, [
+    env.DB.prepare(
+      `UPDATE projects SET deleted_at = ?, updated_at = ?
+        WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
+    ).bind(nowIso, nowIso, id, ctx.tenantId),
     env.DB.prepare(
       `UPDATE notebooks SET project_id = NULL, updated_at = ?
         WHERE project_id = ? AND tenant_id = ? AND deleted_at IS NULL`
     ).bind(nowIso, id, ctx.tenantId),
     env.DB.prepare('DELETE FROM project_members WHERE project_id = ? AND tenant_id = ?')
       .bind(id, ctx.tenantId),
-  ]);
+  ], {
+    action: 'project.delete', targetType: 'project', targetId: id,
+    before: { name: current.name, description: current.description ?? '' },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id } };
 }
 
@@ -139,6 +180,12 @@ export async function putProjectMembers(env, ctx, id, body, nowIso = new Date().
     }
   }
 
+  // 監査の before/after には並べ替えた user_id の配列を入れる（順序違いで差分に見えないように）
+  const existing = await env.DB.prepare(
+    'SELECT user_id FROM project_members WHERE tenant_id = ? AND project_id = ?'
+  ).bind(ctx.tenantId, id).all();
+  const beforeIds = (existing.results ?? []).map((row) => row.user_id).sort();
+
   const statements = [
     env.DB.prepare('DELETE FROM project_members WHERE tenant_id = ? AND project_id = ?')
       .bind(ctx.tenantId, id),
@@ -147,6 +194,9 @@ export async function putProjectMembers(env, ctx, id, body, nowIso = new Date().
        VALUES (?, ?, ?, ?, ?)`
     ).bind(ulid(), ctx.tenantId, id, userId, nowIso)),
   ];
-  await env.DB.batch(statements);
+  await commitWithAudit(env, ctx, statements, {
+    action: 'project.members_replace', targetType: 'project', targetId: id,
+    before: { user_ids: beforeIds }, after: { user_ids: [...wanted].sort() },
+  }, nowIso);
   return { status: 200, data: { members: await membersOf(env, ctx, id) } };
 }

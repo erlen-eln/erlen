@@ -2,6 +2,7 @@
 // 「どの機器で測ったか」を記録に残せるようにするための台帳。
 // 【鉄則】このファイルの全SQLに tenant_id = ? が入っていること。
 import { ulid } from '../ulid.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 const COLUMNS = [
   'id', 'name', 'category', 'capacity', 'temperature_range', 'pressure_range',
@@ -84,7 +85,11 @@ export async function createEquipment(env, ctx, body, nowIso = new Date().toISOS
   const row = normalizeEquipment(body);
   if (!row.name) return { status: 400, data: { error: 'name_required' } };
   const id = ulid();
-  await env.DB.prepare(INSERT_SQL).bind(...insertArgs(id, ctx.tenantId, row, nowIso)).run();
+  const stmt = env.DB.prepare(INSERT_SQL).bind(...insertArgs(id, ctx.tenantId, row, nowIso));
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'equipment.create', targetType: 'equipment', targetId: id,
+    after: { ...row },
+  }, nowIso);
   const created = await getEquipment(env, ctx, id);
   return { ...created, status: 201 };
 }
@@ -102,47 +107,121 @@ export async function bulkCreateEquipments(env, ctx, body, nowIso = new Date().t
   if (missing >= 0) return { status: 400, data: { error: 'name_required', index: missing } };
 
   const ids = rows.map(() => ulid());
-  await env.DB.batch(rows.map((row, i) => (
+  // 監査は1件にまとめて、作った id の束と件数だけを残す
+  await commitWithAudit(env, ctx, rows.map((row, i) => (
     env.DB.prepare(INSERT_SQL).bind(...insertArgs(ids[i], ctx.tenantId, row, nowIso))
-  )));
+  )), {
+    action: 'equipment.bulk', targetType: 'equipment', targetId: '',
+    after: { ids, count: ids.length },
+  }, nowIso);
   return { status: 201, data: { created: ids.length, ids } };
 }
 
 export async function patchEquipment(env, ctx, id, body, nowIso = new Date().toISOString()) {
+  // 監査の before を取るために先に現在行を引く（無ければ従来どおり404）
+  const current = await env.DB.prepare(
+    `SELECT ${COLUMNS}
+       FROM equipments
+      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
+  ).bind(id, ctx.tenantId).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+
   const sets = [];
   const args = [];
   const put = (column, value) => { sets.push(`${column} = ?`); args.push(value); };
+  const changes = [];
 
   if (body?.name !== undefined) {
     const name = text(body.name, 300);
     if (!name) return { status: 400, data: { error: 'name_required' } };
     put('name', name);
+    changes.push(['name', name]);
   }
-  if (body?.category !== undefined) put('category', text(body.category, 200));
-  if (body?.capacity !== undefined) put('capacity', text(body.capacity, 200));
-  if (body?.temperature_range !== undefined) put('temperature_range', text(body.temperature_range, 200));
-  if (body?.pressure_range !== undefined) put('pressure_range', text(body.pressure_range, 200));
-  if (body?.manufacturer !== undefined) put('manufacturer', text(body.manufacturer, 200));
-  if (body?.model_number !== undefined) put('model_number', text(body.model_number, 200));
-  if (body?.management_number !== undefined) put('management_number', text(body.management_number, 100));
-  if (body?.notes !== undefined) put('notes', text(body.notes, 20000));
+  if (body?.category !== undefined) {
+    const v = text(body.category, 200);
+    put('category', v);
+    changes.push(['category', v]);
+  }
+  if (body?.capacity !== undefined) {
+    const v = text(body.capacity, 200);
+    put('capacity', v);
+    changes.push(['capacity', v]);
+  }
+  if (body?.temperature_range !== undefined) {
+    const v = text(body.temperature_range, 200);
+    put('temperature_range', v);
+    changes.push(['temperature_range', v]);
+  }
+  if (body?.pressure_range !== undefined) {
+    const v = text(body.pressure_range, 200);
+    put('pressure_range', v);
+    changes.push(['pressure_range', v]);
+  }
+  if (body?.manufacturer !== undefined) {
+    const v = text(body.manufacturer, 200);
+    put('manufacturer', v);
+    changes.push(['manufacturer', v]);
+  }
+  if (body?.model_number !== undefined) {
+    const v = text(body.model_number, 200);
+    put('model_number', v);
+    changes.push(['model_number', v]);
+  }
+  if (body?.management_number !== undefined) {
+    const v = text(body.management_number, 100);
+    put('management_number', v);
+    changes.push(['management_number', v]);
+  }
+  if (body?.notes !== undefined) {
+    const v = text(body.notes, 20000);
+    put('notes', v);
+    changes.push(['notes', v]);
+  }
   if (!sets.length) return { status: 400, data: { error: 'no_fields' } };
+
+  // 監査の before/after には「変わった列」だけを入れる
+  const before = {};
+  const after = {};
+  for (const [column, value] of changes) {
+    const oldVal = current[column] ?? null;
+    if (oldVal !== (value ?? null)) {
+      before[column] = oldVal;
+      after[column] = value ?? null;
+    }
+  }
 
   put('updated_at', nowIso);
   args.push(id, ctx.tenantId);
-  const res = await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `UPDATE equipments SET ${sets.join(', ')}
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(...args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(...args);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'equipment.update', targetType: 'equipment', targetId: id, before, after,
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return await getEquipment(env, ctx, id);
 }
 
 export async function deleteEquipment(env, ctx, id, nowIso = new Date().toISOString()) {
-  const res = await env.DB.prepare(
+  // 監査の before を取るために先に対象行を引く（無ければ従来どおり404）
+  const current = await env.DB.prepare(
+    `SELECT name, model_number, management_number FROM equipments
+      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
+  ).bind(id, ctx.tenantId).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+  const stmt = env.DB.prepare(
     `UPDATE equipments SET deleted_at = ?, updated_at = ?
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, nowIso, id, ctx.tenantId).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(nowIso, nowIso, id, ctx.tenantId);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'equipment.delete', targetType: 'equipment', targetId: id,
+    before: {
+      name: current.name,
+      model_number: current.model_number ?? '',
+      management_number: current.management_number ?? '',
+    },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id } };
 }

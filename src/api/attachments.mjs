@@ -14,6 +14,7 @@
 // 所属ノートブックが見えない人には、添付も存在しないように振る舞う（src/access.mjs）。
 import { ulid } from '../ulid.mjs';
 import { attachmentVisibility, pageVisibility } from '../access.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 const COLUMNS = 'id, page_id, user_id, file_name, file_size, mime_type, sha256, created_at';
 
@@ -109,17 +110,23 @@ export async function createAttachment(env, ctx, pageId, input, nowIso = new Dat
     customMetadata: { tenantId: ctx.tenantId, pageId, sha256 },
   });
 
-  await env.DB.prepare(
-    `INSERT INTO attachments
-       (id, tenant_id, page_id, user_id, r2_key, file_name, file_size, mime_type, sha256, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(id, ctx.tenantId, pageId, ctx.userId, key, fileName, bytes.byteLength, mimeType, sha256, nowIso).run();
-
-  // 添付を足したこともページの更新として扱う（一覧の並びが実態とずれないように）
-  await env.DB.prepare(
-    `UPDATE pages SET updated_at = ?
-      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, pageId, ctx.tenantId).run();
+  // R2のputは上の位置のまま。D1側の台帳INSERTと pages.updated_at のUPDATEは
+  // 1つの監査付きバッチにまとめる（証跡だけ残る状態を作らない）
+  await commitWithAudit(env, ctx, [
+    env.DB.prepare(
+      `INSERT INTO attachments
+         (id, tenant_id, page_id, user_id, r2_key, file_name, file_size, mime_type, sha256, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(id, ctx.tenantId, pageId, ctx.userId, key, fileName, bytes.byteLength, mimeType, sha256, nowIso),
+    // 添付を足したこともページの更新として扱う（一覧の並びが実態とずれないように）
+    env.DB.prepare(
+      `UPDATE pages SET updated_at = ?
+        WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
+    ).bind(nowIso, pageId, ctx.tenantId),
+  ], {
+    action: 'attachment.create', targetType: 'attachment', targetId: id, pageId,
+    after: { file_name: fileName, size: bytes.byteLength, sha256 },
+  }, nowIso);
 
   return {
     status: 201,
@@ -154,10 +161,22 @@ export async function getAttachment(env, ctx, attachmentId) {
 // 論理削除。R2の実体は残す（消えた添付を「記録として消えていない」状態に保つため）
 export async function deleteAttachment(env, ctx, attachmentId, nowIso = new Date().toISOString()) {
   const vis = attachmentVisibility(ctx, 'attachments');
-  const res = await env.DB.prepare(
+  // 監査の before（file_name）と pageId を取るために先に対象行を引く。
+  // 見えない添付はここで404（存在ごと隠す）
+  const current = await env.DB.prepare(
+    `SELECT id, page_id, file_name FROM attachments
+      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL${vis.sql}`
+  ).bind(attachmentId, ctx.tenantId, ...vis.args).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+  const stmt = env.DB.prepare(
     `UPDATE attachments SET deleted_at = ?
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL${vis.sql}`
-  ).bind(nowIso, attachmentId, ctx.tenantId, ...vis.args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(nowIso, attachmentId, ctx.tenantId, ...vis.args);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'attachment.delete', targetType: 'attachment', targetId: attachmentId,
+    pageId: current.page_id,
+    before: { file_name: current.file_name },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id: attachmentId } };
 }

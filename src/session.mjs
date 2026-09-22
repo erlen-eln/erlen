@@ -6,6 +6,7 @@
 // users への行作成は必ず「招待の受諾＝招待済みアドレスでの初回ログイン」を経由する。
 import { parseCookies, verifySession, SESSION_COOKIE } from './auth.mjs';
 import { ulid } from './ulid.mjs';
+import { commitWithAudit } from './audit.mjs';
 
 // 認証済みユーザーを1人ぶん引く。
 // users は「テナントの入口」なので、この1本だけは tenant_id で絞れない（絞る材料がまだ無い）。
@@ -29,20 +30,36 @@ async function findPendingInvitation(env, email) {
   ).bind(email).first();
 }
 
+// オーナーのテナントを引く。ログインが成立していない場面（拒否・失敗の監査記録）で
+// 書き先の tenant_id を決めるために使う（このシステムは単一テナント前提）。
+// オーナー行がまだ無い（誰もログインしたことが無い）ときは null を返し、記録しない。
+export async function ownerTenantId(env) {
+  const owner = String(env.OWNER_EMAIL ?? '').trim().toLowerCase();
+  if (!owner) return null;
+  const row = await env.DB.prepare(
+    `SELECT tenant_id FROM users
+      WHERE email = ? AND role = 'owner' AND deleted_at IS NULL`
+  ).bind(owner).first();
+  return row?.tenant_id ?? null;
+}
+
 // ログイン成功時の初回セットアップ。テナント1行＋ユーザー1行を同時に作る。
 // 2回目以降は既存行をそのまま返す（この道を通れるのはオーナーだけ）。
-export async function ensureUser(env, { sub, email, name = '' }, nowIso) {
+export async function ensureUser(env, { sub, email, name = '' }, nowIso, requestId = '') {
   const existing = await findUserByEmail(env, email);
   if (existing) return existing;
   const tenantId = ulid();
-  await env.DB.batch([
+  await commitWithAudit(env, { userId: sub, tenantId, email, requestId }, [
     env.DB.prepare('INSERT INTO tenants (id, name, created_at) VALUES (?, ?, ?)')
       .bind(tenantId, name || email, nowIso),
     env.DB.prepare(
       `INSERT INTO users (id, tenant_id, email, name, role, created_at)
        VALUES (?, ?, ?, ?, 'owner', ?)`
     ).bind(sub, tenantId, email, name, nowIso),
-  ]);
+  ], {
+    action: 'tenant.bootstrap', targetType: 'tenant', targetId: tenantId,
+    after: { email },
+  }, nowIso);
   return { id: sub, tenant_id: tenantId, email, name, role: 'owner' };
 }
 
@@ -85,12 +102,12 @@ export function decideLogin({
 // （users.email はUNIQUEなので、作り直しはできない）。
 // このとき users.id を新しいsubへ差し替える。別のGoogleアカウントで戻ってきた場合、
 // 以前に書いた記録の作成者idは古いsubのまま残る（記録そのものは消さないので、履歴は追える）。
-async function acceptInvitation(env, invitation, { sub, email, name }, nowIso) {
+async function acceptInvitation(env, invitation, { sub, email, name }, nowIso, requestId = '') {
   const buried = await env.DB.prepare(
     'SELECT id FROM users WHERE email = ? AND tenant_id = ?'
   ).bind(email, invitation.tenant_id).first();
 
-  await env.DB.batch([
+  await commitWithAudit(env, { userId: sub, tenantId: invitation.tenant_id, email, requestId }, [
     buried
       // 戻ってきた人の権限は招待の内容で上書きする。
       // 昇格の記録（owner_granted_*）も一緒に落とす。以前オーナーだった人が
@@ -108,7 +125,10 @@ async function acceptInvitation(env, invitation, { sub, email, name }, nowIso) {
       `UPDATE invitations SET accepted_at = ?
         WHERE id = ? AND tenant_id = ? AND accepted_at IS NULL AND revoked_at IS NULL`
     ).bind(nowIso, invitation.id, invitation.tenant_id),
-  ]);
+  ], {
+    action: 'invitation.accept', targetType: 'invitation', targetId: invitation.id,
+    after: { email, role: invitation.role, invitation_id: invitation.id },
+  }, nowIso);
   return {
     id: sub, tenant_id: invitation.tenant_id, email, name, role: invitation.role,
   };
@@ -116,7 +136,7 @@ async function acceptInvitation(env, invitation, { sub, email, name }, nowIso) {
 
 // /auth/callback から呼ぶ入口。DBを引いて decideLogin に判断させ、必要な書き込みまで済ませる。
 // 成功は {ok:true, user}（デモは {ok:true, session}）、失敗は {ok:false, status, reason}
-export async function resolveLogin(env, { sub, email, name = '' }, nowIso, { demoMode = false } = {}) {
+export async function resolveLogin(env, { sub, email, name = '' }, nowIso, { demoMode = false, requestId = '' } = {}) {
   const addr = String(email ?? '').trim().toLowerCase();
   const user = await findUserByEmail(env, addr);
   const invitation = user ? null : await findPendingInvitation(env, addr);
@@ -126,13 +146,13 @@ export async function resolveLogin(env, { sub, email, name = '' }, nowIso, { dem
 
   switch (decision.action) {
     case 'bootstrap':
-      return { ok: true, user: await ensureUser(env, { sub, email: addr, name }, nowIso) };
+      return { ok: true, user: await ensureUser(env, { sub, email: addr, name }, nowIso, requestId) };
     case 'login':
       return { ok: true, user: decision.user };
     case 'accept':
       return {
         ok: true,
-        user: await acceptInvitation(env, decision.invitation, { sub, email: addr, name }, nowIso),
+        user: await acceptInvitation(env, decision.invitation, { sub, email: addr, name }, nowIso, requestId),
       };
     // デモは users にも tenants にも一切書かない（DBが汚れない・メンバー一覧に出ない）。
     // 身元はCookieの中だけに持ち、ロールは loadContext が viewer 固定で与える

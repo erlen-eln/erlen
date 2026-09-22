@@ -3,6 +3,7 @@
 // 一覧はマスタをLEFT JOINして、画面がそのまま描ける形（display_name・分子量つき）で返す。
 // 【鉄則】このファイルの全SQLに tenant_id = ? が入っていること。
 import { ulid } from '../ulid.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 // 一覧・単体で返す列。
 // display_name … マスタ名が最優先、無ければカスタム名（画面はこれをそのまま出す）
@@ -92,26 +93,42 @@ export async function createStock(env, ctx, body, nowIso = new Date().toISOStrin
   if (!master.id && !customName) return { status: 400, data: { error: 'reagent_required' } };
 
   const id = ulid();
-  await env.DB.prepare(
+  const row = {
+    reagent_master_id: master.id,
+    custom_reagent_name: customName,
+    manufacturer: text(body?.manufacturer, 200),
+    lot_number: text(body?.lot_number, 100),
+    received_date: text(body?.received_date, 30),
+    is_opened: body?.is_opened ? 1 : 0,
+    storage_location: text(body?.storage_location, 200),
+    remaining_amount: num(body?.remaining_amount),
+    remaining_unit: text(body?.remaining_unit, 20),
+    notes: text(body?.notes, 20000),
+  };
+  const stmt = env.DB.prepare(
     `INSERT INTO reagent_stocks
        (id, tenant_id, reagent_master_id, custom_reagent_name, manufacturer, lot_number,
         received_date, is_opened, storage_location, remaining_amount, remaining_unit,
         notes, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
-    id, ctx.tenantId, master.id, customName,
-    text(body?.manufacturer, 200), text(body?.lot_number, 100),
-    text(body?.received_date, 30), body?.is_opened ? 1 : 0,
-    text(body?.storage_location, 200), num(body?.remaining_amount),
-    text(body?.remaining_unit, 20), text(body?.notes, 20000), nowIso, nowIso
-  ).run();
+    id, ctx.tenantId, row.reagent_master_id, row.custom_reagent_name,
+    row.manufacturer, row.lot_number, row.received_date, row.is_opened,
+    row.storage_location, row.remaining_amount, row.remaining_unit,
+    row.notes, nowIso, nowIso
+  );
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'stock.create', targetType: 'stock', targetId: id,
+    after: row,
+  }, nowIso);
   const created = await getStock(env, ctx, id);
   return { ...created, status: 201 };
 }
 
 export async function patchStock(env, ctx, id, body, nowIso = new Date().toISOString()) {
+  // 監査の before を取るために全列を引く（無ければ従来どおり404）
   const current = await env.DB.prepare(
-    `SELECT reagent_master_id, custom_reagent_name FROM reagent_stocks
+    `SELECT * FROM reagent_stocks
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
   ).bind(id, ctx.tenantId).first();
   if (!current) return { status: 404, data: { error: 'not_found' } };
@@ -119,6 +136,7 @@ export async function patchStock(env, ctx, id, body, nowIso = new Date().toISOSt
   const sets = [];
   const args = [];
   const put = (column, value) => { sets.push(`${column} = ?`); args.push(value); };
+  const changes = [];
 
   // 部分更新でも「マスタにも紐づかず名前も無い在庫」を作らせない。
   // 書く前に、更新後がどうなるかを組み立てて判定する
@@ -129,37 +147,101 @@ export async function patchStock(env, ctx, id, body, nowIso = new Date().toISOSt
     if (!master.ok) return { status: 400, data: { error: 'reagent_master_not_found' } };
     masterId = master.id;
     put('reagent_master_id', master.id);
+    changes.push(['reagent_master_id', master.id]);
   }
   if (body?.custom_reagent_name !== undefined) {
     customName = text(body.custom_reagent_name, 300);
     put('custom_reagent_name', customName);
+    changes.push(['custom_reagent_name', customName]);
   }
   if (!masterId && !customName) return { status: 400, data: { error: 'reagent_required' } };
-  if (body?.manufacturer !== undefined) put('manufacturer', text(body.manufacturer, 200));
-  if (body?.lot_number !== undefined) put('lot_number', text(body.lot_number, 100));
-  if (body?.received_date !== undefined) put('received_date', text(body.received_date, 30));
-  if (body?.is_opened !== undefined) put('is_opened', body.is_opened ? 1 : 0);
-  if (body?.storage_location !== undefined) put('storage_location', text(body.storage_location, 200));
-  if (body?.remaining_amount !== undefined) put('remaining_amount', num(body.remaining_amount));
-  if (body?.remaining_unit !== undefined) put('remaining_unit', text(body.remaining_unit, 20));
-  if (body?.notes !== undefined) put('notes', text(body.notes, 20000));
+  if (body?.manufacturer !== undefined) {
+    const v = text(body.manufacturer, 200);
+    put('manufacturer', v);
+    changes.push(['manufacturer', v]);
+  }
+  if (body?.lot_number !== undefined) {
+    const v = text(body.lot_number, 100);
+    put('lot_number', v);
+    changes.push(['lot_number', v]);
+  }
+  if (body?.received_date !== undefined) {
+    const v = text(body.received_date, 30);
+    put('received_date', v);
+    changes.push(['received_date', v]);
+  }
+  if (body?.is_opened !== undefined) {
+    const v = body.is_opened ? 1 : 0;
+    put('is_opened', v);
+    changes.push(['is_opened', v]);
+  }
+  if (body?.storage_location !== undefined) {
+    const v = text(body.storage_location, 200);
+    put('storage_location', v);
+    changes.push(['storage_location', v]);
+  }
+  if (body?.remaining_amount !== undefined) {
+    const v = num(body.remaining_amount);
+    put('remaining_amount', v);
+    changes.push(['remaining_amount', v]);
+  }
+  if (body?.remaining_unit !== undefined) {
+    const v = text(body.remaining_unit, 20);
+    put('remaining_unit', v);
+    changes.push(['remaining_unit', v]);
+  }
+  if (body?.notes !== undefined) {
+    const v = text(body.notes, 20000);
+    put('notes', v);
+    changes.push(['notes', v]);
+  }
   if (!sets.length) return { status: 400, data: { error: 'no_fields' } };
+
+  // 監査の before/after には「変わった列」だけを入れる
+  const before = {};
+  const after = {};
+  for (const [column, value] of changes) {
+    const oldVal = current[column] ?? null;
+    if (oldVal !== (value ?? null)) {
+      before[column] = oldVal;
+      after[column] = value ?? null;
+    }
+  }
 
   put('updated_at', nowIso);
   args.push(id, ctx.tenantId);
-  const res = await env.DB.prepare(
+  const stmt = env.DB.prepare(
     `UPDATE reagent_stocks SET ${sets.join(', ')}
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(...args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(...args);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'stock.update', targetType: 'stock', targetId: id, before, after,
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return await getStock(env, ctx, id);
 }
 
 export async function deleteStock(env, ctx, id, nowIso = new Date().toISOString()) {
-  const res = await env.DB.prepare(
+  // 監査の before を取るために先に対象行を引く（無ければ従来どおり404）
+  const current = await env.DB.prepare(
+    `SELECT reagent_master_id, custom_reagent_name, lot_number, storage_location
+       FROM reagent_stocks
+      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
+  ).bind(id, ctx.tenantId).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+  const stmt = env.DB.prepare(
     `UPDATE reagent_stocks SET deleted_at = ?, updated_at = ?
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(nowIso, nowIso, id, ctx.tenantId).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(nowIso, nowIso, id, ctx.tenantId);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'stock.delete', targetType: 'stock', targetId: id,
+    before: {
+      reagent_master_id: current.reagent_master_id ?? null,
+      custom_reagent_name: current.custom_reagent_name ?? '',
+      lot_number: current.lot_number ?? '',
+      storage_location: current.storage_location ?? '',
+    },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id } };
 }

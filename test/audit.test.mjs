@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createTestEnv } from './d1-adapter.mjs';
-import { createNotebook } from '../src/api/notebooks.mjs';
 import { createPage, patchPage, deletePage } from '../src/api/pages.mjs';
 import {
   AUDIT_ACTIONS, actorOf, canonicalize, commitWithAudit, hashEvent, recordAudit,
@@ -12,8 +11,14 @@ const TENANT = 'T0000000000000000000000000';
 
 async function setup() {
   const t = createTestEnv();
-  const nb = (await createNotebook(t.env, t.ctx, { title: 'ノート' })).data.notebook;
-  return { ...t, notebookId: nb.id };
+  // 前提のノートブックは監査経路を通さず直接置く。
+  // このファイルが見るのはページ操作の記録で、ノートブック作成の監査（notebook.create）は
+  // 各テストの件数・連番の前提をずらすノイズになるため
+  t.DB.__raw.prepare(
+    `INSERT INTO notebooks (id, tenant_id, user_id, title, created_at, updated_at)
+     VALUES ('NB-SETUP-1', ?, 'google-sub-1', 'ノート', ?, ?)`
+  ).run(TENANT, NOW, NOW);
+  return { ...t, notebookId: 'NB-SETUP-1' };
 }
 
 // 検査用の読み出しは __raw で行う（アプリのSQLログ __sql を汚さない）
