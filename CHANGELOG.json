@@ -1,8 +1,16 @@
 [
   {
-    "version": "unreleased",
-    "date": "2026-08-24",
+    "version": "1.4.0",
+    "date": "2026-09-22",
     "ja": [
+      "監査証跡を全面的に作り直し: 全ての書き込み操作（ページの作成・編集・確定・確定取消・削除、反応テーブル、添付、ノートブック、プロジェクト、招待、権限変更、試薬・在庫・機器の台帳、ログインとログアウト）を audit_events に記録するようにしました",
+      "監査証跡は追記専用です（UPDATE と DELETE はデータベースのトリガが拒否します）",
+      "各行が直前の行のハッシュを含む連鎖になっており、テナントごとの連番とあわせて、過去の行の書き換えや欠落を識別できます",
+      "業務の書き込みと監査の記録を同じトランザクションで流すようにしました（監査が書けなければ業務の書き込みも成立しません）",
+      "npm run verify-audit を追加: 連鎖が壊れていないかを自分で検証できます（バックアップのダンプ、または本番のD1に対して実行）",
+      "ページの本文・タイトル・実験日を編集したときにも改訂履歴（page_revisions）が残るようになりました（これまでは反応テーブルを保存したときだけでした）",
+      "監査証跡を読むAPIを追加: GET /api/audit（オーナーのみ）、GET /api/pages/:id/audit、GET /api/audit/export（JSONL）、GET /api/pages/:id/revisions",
+      "ページ画面に「履歴」パネルを追加: そのページの操作ログと改訂履歴を読み取り専用で見られます",
       "OSS化の準備: ライセンスを Apache License 2.0 に変更（LICENSE / NOTICE をルートに追加・EULAは廃止）",
       "同梱物のライセンス表記を整備（Ketcher の LICENSE・NOTICE、RDKit.js の LICENSE を同梱）",
       "READMEを日英併記で全面改訂（オープンソース版の入手・導入・貢献の案内）",
@@ -12,6 +20,14 @@
       "GitHub Actionsを追加: pushとPull Requestでテストと型検査が走り、v* タグで配布zip付きのReleaseが自動で作られる"
     ],
     "en": [
+      "Audit trail rebuilt: every write operation is now recorded in audit_events (page create/edit/finalize/reopen/delete, reaction tables, attachments, notebooks, projects, invitations, role changes, reagent/stock/equipment ledgers, sign-in and sign-out)",
+      "The audit trail is append-only; UPDATE and DELETE are rejected by database triggers",
+      "Each row carries the hash of the previous row, and rows are numbered per tenant, so rewritten or missing history can be identified",
+      "The business write and its audit record are committed in the same transaction: if the audit cannot be written, neither is the change",
+      "Added npm run verify-audit so you can check the hash chain yourself (against a backup dump or your live D1)",
+      "Editing a page's body, title or experiment date now also stores a revision snapshot (previously only reaction-table saves did)",
+      "New read APIs: GET /api/audit (owner only), GET /api/pages/:id/audit, GET /api/audit/export (JSONL), GET /api/pages/:id/revisions",
+      "The page screen has a new read-only History panel showing that page's operation log and revisions",
       "Open-source preparation: relicensed under the Apache License 2.0 (LICENSE / NOTICE added at the root; the EULA is retired)",
       "Bundled third-party notices completed (Ketcher's LICENSE and NOTICE, RDKit.js's LICENSE)",
       "README rewritten in Japanese and English (how to get, deploy and contribute to the open-source edition)",

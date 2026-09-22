@@ -374,7 +374,7 @@ SETUP.md の「更新の適用」の節と AI_CONSTITUTION.md を全文読み、
           </div>
         </section>
 
-        <section class="step" id="history" aria-labelledby="history-title" data-latest-version="1.3.0">
+        <section class="step" id="history" aria-labelledby="history-title" data-latest-version="1.4.0">
           <div class="step-head">
             <span class="step-no" aria-hidden="true">＋</span>
             <div>
@@ -384,6 +384,25 @@ SETUP.md の「更新の適用」の節と AI_CONSTITUTION.md を全文読み、
           </div>
           <div class="step-body">
             <p class="callout">最新の履歴は https://erlen.jp/changelog でも公開しています。</p>
+            <p><strong>v1.4.0</strong></p>
+            <ul>
+              <li>監査証跡を全面的に作り直し: 全ての書き込み操作（ページの作成・編集・確定・確定取消・削除、反応テーブル、添付、ノートブック、プロジェクト、招待、権限変更、試薬・在庫・機器の台帳、ログインとログアウト）を audit_events に記録するようにしました</li>
+              <li>監査証跡は追記専用です（UPDATE と DELETE はデータベースのトリガが拒否します）</li>
+              <li>各行が直前の行のハッシュを含む連鎖になっており、テナントごとの連番とあわせて、過去の行の書き換えや欠落を識別できます</li>
+              <li>業務の書き込みと監査の記録を同じトランザクションで流すようにしました（監査が書けなければ業務の書き込みも成立しません）</li>
+              <li>npm run verify-audit を追加: 連鎖が壊れていないかを自分で検証できます（バックアップのダンプ、または本番のD1に対して実行）</li>
+              <li>ページの本文・タイトル・実験日を編集したときにも改訂履歴（page_revisions）が残るようになりました（これまでは反応テーブルを保存したときだけでした）</li>
+              <li>監査証跡を読むAPIを追加: GET /api/audit（オーナーのみ）、GET /api/pages/:id/audit、GET /api/audit/export（JSONL）、GET /api/pages/:id/revisions</li>
+              <li>ページ画面に「履歴」パネルを追加: そのページの操作ログと改訂履歴を読み取り専用で見られます</li>
+              <li>OSS化の準備: ライセンスを Apache License 2.0 に変更（LICENSE / NOTICE をルートに追加・EULAは廃止）</li>
+              <li>同梱物のライセンス表記を整備（Ketcher の LICENSE・NOTICE、RDKit.js の LICENSE を同梱）</li>
+              <li>READMEを日英併記で全面改訂（オープンソース版の入手・導入・貢献の案内）</li>
+              <li>溶媒プリセットからCAS登録番号を削除（空欄で配布。必要ならPubChem補完か手入力で埋める）</li>
+              <li>機器プリセットのメーカー名・型番を総称の記入例に置き換え</li>
+              <li>貢献の手引き・セキュリティ方針・今後の見通しを同梱（CONTRIBUTING.md / SECURITY.md / ROADMAP.md）</li>
+              <li>GitHub Actionsを追加: pushとPull Requestでテストと型検査が走り、v* タグで配布zip付きのReleaseが自動で作られる</li>
+            </ul>
+
             <p><strong>v1.3.0</strong></p>
             <ul>
               <li>デモモード（DEMO_MODE）: 招待なしのGoogleログインを閲覧専用として通せる（公開デモ用・既定はオフ）</li>
