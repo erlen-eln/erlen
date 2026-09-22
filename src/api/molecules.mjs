@@ -7,6 +7,8 @@
 // saveMolecules は外から直接叩かれる入口なので、ここでも見えるページかを確かめる。
 import { ulid } from '../ulid.mjs';
 import { pageVisibility } from '../access.mjs';
+import { revisionStatement } from '../revisions.mjs';
+import { commitWithAudit } from '../audit.mjs';
 
 export const MOLECULE_COLUMNS = [
   'id', 'role', 'name', 'smiles', 'molfile', 'svg', 'cas_number',
@@ -135,26 +137,23 @@ export async function saveMolecules(env, ctx, pageId, body, nowIso = new Date().
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
   ).bind(nowIso, pageId, ctx.tenantId));
 
-  // 改訂番号は「今ある最大＋1」。同時保存が競合してもUNIQUE(page_id, rev_no)で弾かれる
-  const last = await env.DB.prepare(
-    `SELECT COALESCE(MAX(rev_no), 0) AS rev_no
-       FROM page_revisions
-      WHERE tenant_id = ? AND page_id = ?`
-  ).bind(ctx.tenantId, pageId).first();
-  const revNo = Number(last?.rev_no ?? 0) + 1;
-  const snapshot = JSON.stringify({
+  // 改訂履歴の採番とスナップショット INSERT は revisions.mjs に集約してある。
+  // スナップショットの形は { page, molecules }（印刷レポートや将来の復元で形を揃えるため）。
+  // 同時保存が競合しても UNIQUE(page_id, rev_no) で弾かれる
+  const rev = await revisionStatement(env, ctx, pageId, {
     page: { ...page, updated_at: nowIso },
     molecules: saved,
-  });
-  statements.push(env.DB.prepare(
-    `INSERT INTO page_revisions
-       (id, tenant_id, page_id, rev_no, author_user_id, snapshot, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).bind(ulid(), ctx.tenantId, pageId, revNo, ctx.userId, snapshot, nowIso));
+  }, nowIso);
+  if (rev.stmt) statements.push(rev.stmt);
 
-  await env.DB.batch(statements);
+  // 業務の書き込みと監査証跡を1つの batch（＝1トランザクション）で流す。
+  // 監査が書けなければ業務も失敗する（監査の無い書き込みを残さない）
+  await commitWithAudit(env, ctx, statements, {
+    action: 'molecules.replace', targetType: 'page', targetId: pageId, pageId,
+    after: { rev_no: rev.revNo, count: saved.length },
+  }, nowIso);
   return {
     status: 200,
-    data: { molecules: await listMolecules(env, ctx, pageId), rev_no: revNo },
+    data: { molecules: await listMolecules(env, ctx, pageId), rev_no: rev.revNo },
   };
 }

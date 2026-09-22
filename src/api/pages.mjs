@@ -6,6 +6,9 @@
 import { ulid } from '../ulid.mjs';
 import { listMolecules } from './molecules.mjs';
 import { notebookVisibility, pageVisibility } from '../access.mjs';
+import { sha256Hex } from './attachments.mjs';
+import { commitWithAudit } from '../audit.mjs';
+import { revisionStatement } from '../revisions.mjs';
 
 const COLUMNS = 'id, notebook_id, user_id, title, content, status, experiment_date, created_at, updated_at';
 // 一覧では本文（content）を返さない。ページが増えたときの転送量を抑えるため
@@ -54,20 +57,26 @@ export async function createPage(env, ctx, notebookId, body, nowIso = new Date()
   if (!notebook) return { status: 404, data: { error: 'notebook_not_found' } };
 
   const id = ulid();
-  await env.DB.prepare(
+  const experimentDate = text(body?.experiment_date, 30);
+  const stmt = env.DB.prepare(
     `INSERT INTO pages
        (id, tenant_id, notebook_id, user_id, title, content, status, experiment_date, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, '', 'draft', ?, ?, ?)`
   ).bind(id, ctx.tenantId, notebookId, ctx.userId, title,
-    text(body?.experiment_date, 30), nowIso, nowIso).run();
+    experimentDate, nowIso, nowIso);
+  await commitWithAudit(env, ctx, [stmt], {
+    action: 'page.create', targetType: 'page', targetId: id, pageId: id,
+    after: { title, experiment_date: experimentDate, notebook_id: notebookId },
+  }, nowIso);
   const created = await getPage(env, ctx, id);
   return { ...created, status: 201 };
 }
 
 export async function patchPage(env, ctx, pageId, body, nowIso = new Date().toISOString()) {
   const vis = pageVisibility(ctx, 'pages');
+  // 監査証跡の before と改訂スナップショットのために、変更前の列を引いておく
   const current = await env.DB.prepare(
-    `SELECT id, status FROM pages
+    `SELECT ${COLUMNS} FROM pages
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL${vis.sql}`
   ).bind(pageId, ctx.tenantId, ...vis.args).first();
   if (!current) return { status: 404, data: { error: 'not_found' } };
@@ -85,15 +94,33 @@ export async function patchPage(env, ctx, pageId, body, nowIso = new Date().toIS
 
   const sets = [];
   const args = [];
+  // 監査証跡に入れる「変わった項目」の before/after と、更新後のページ内容をここで確定させる
+  const before = {};
+  const after = {};
+  const next = {
+    title: current.title,
+    content: current.content,
+    status: current.status,
+    experiment_date: current.experiment_date,
+  };
+  let contentChanged = false;
   if (body?.title !== undefined) {
     const title = text(body.title, 300).trim();
     if (!title) return { status: 400, data: { error: 'title_required' } };
     sets.push('title = ?');
     args.push(title);
+    next.title = title;
+    if (title !== current.title) {
+      before.title = current.title;
+      after.title = title;
+    }
   }
   if (body?.content !== undefined) {
+    const content = text(body.content);
     sets.push('content = ?');
-    args.push(text(body.content));
+    args.push(content);
+    next.content = content;
+    contentChanged = content !== current.content;
   }
   if (body?.status !== undefined) {
     if (!['draft', 'closed'].includes(body.status)) {
@@ -101,30 +128,91 @@ export async function patchPage(env, ctx, pageId, body, nowIso = new Date().toIS
     }
     sets.push('status = ?');
     args.push(body.status);
+    next.status = body.status;
   }
   if (body?.experiment_date !== undefined) {
+    const date = text(body.experiment_date, 30);
     sets.push('experiment_date = ?');
-    args.push(text(body.experiment_date, 30));
+    args.push(date);
+    next.experiment_date = date;
+    if (date !== current.experiment_date) {
+      before.experiment_date = current.experiment_date;
+      after.experiment_date = date;
+    }
   }
   if (!sets.length) return { status: 400, data: { error: 'no_fields' } };
   sets.push('updated_at = ?');
   args.push(nowIso, pageId, ctx.tenantId);
 
-  const res = await env.DB.prepare(
+  // 本文そのものは監査証跡に入れない（自動保存ごとに最大200KBが積み上がるため）。
+  // ハッシュと文字数だけを記録し、実体は page_revisions のスナップショットが持つ
+  if (contentChanged) {
+    before.content_sha256 = await sha256Hex(new TextEncoder().encode(current.content));
+    before.content_len = current.content.length;
+    after.content_sha256 = await sha256Hex(new TextEncoder().encode(next.content));
+    after.content_len = next.content.length;
+  }
+
+  // status の遷移は専用の action で記録する（確定・確定取消は特に追跡したい操作）
+  let ev;
+  if (body?.status === 'closed' && current.status !== 'closed') {
+    ev = { action: 'page.close', before: { status: current.status }, after: { status: 'closed' } };
+  } else if (body?.status === 'draft' && current.status === 'closed') {
+    ev = {
+      action: 'page.reopen',
+      before: { status: 'closed' },
+      after: { status: 'draft' },
+      reason: body?.reason ? text(body.reason, 500) : '',
+    };
+  } else {
+    ev = { action: 'page.update', before, after };
+  }
+
+  const statements = [env.DB.prepare(
     `UPDATE pages SET ${sets.join(', ')}
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL`
-  ).bind(...args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(...args)];
+
+  // 本文・タイトル・実験日のいずれかが変わったときは改訂履歴も同じ batch に載せる。
+  // 形は molecules.mjs のスナップショットに揃えて { page, molecules }。
+  // ただし page.updated_at は保存のたびに変わるのでスナップショットからは外す
+  // （入れると「直前の版と同一なら書かない」判定が永久に効かなくなる）
+  if (contentChanged || before.title !== undefined || before.experiment_date !== undefined) {
+    const rev = await revisionStatement(env, ctx, pageId, {
+      page: {
+        id: current.id, notebook_id: current.notebook_id, user_id: current.user_id,
+        title: next.title, content: next.content, status: next.status,
+        experiment_date: next.experiment_date, created_at: current.created_at,
+      },
+      molecules: await listMolecules(env, ctx, pageId),
+    }, nowIso);
+    if (rev.stmt) statements.push(rev.stmt);
+  }
+
+  const { results } = await commitWithAudit(env, ctx, statements, {
+    ...ev, targetType: 'page', targetId: pageId, pageId,
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return await getPage(env, ctx, pageId);
 }
 
 // 論理削除。確定済みでも一覧から下げることはできる（記録自体は残る）
 export async function deletePage(env, ctx, pageId, nowIso = new Date().toISOString()) {
   const vis = pageVisibility(ctx, 'pages');
-  const res = await env.DB.prepare(
+  // 監査証跡に残す before（title/status）を取るため、消す前に行を引く
+  const current = await env.DB.prepare(
+    `SELECT id, title, status FROM pages
+      WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL${vis.sql}`
+  ).bind(pageId, ctx.tenantId, ...vis.args).first();
+  if (!current) return { status: 404, data: { error: 'not_found' } };
+  const stmt = env.DB.prepare(
     `UPDATE pages SET deleted_at = ?, updated_at = ?
       WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL${vis.sql}`
-  ).bind(nowIso, nowIso, pageId, ctx.tenantId, ...vis.args).run();
-  if (!res.meta?.changes) return { status: 404, data: { error: 'not_found' } };
+  ).bind(nowIso, nowIso, pageId, ctx.tenantId, ...vis.args);
+  const { results } = await commitWithAudit(env, ctx, [stmt], {
+    action: 'page.delete', targetType: 'page', targetId: pageId, pageId,
+    before: { title: current.title, status: current.status },
+  }, nowIso);
+  if (!results[0].meta?.changes) return { status: 404, data: { error: 'not_found' } };
   return { status: 200, data: { ok: true, id: pageId } };
 }
