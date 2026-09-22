@@ -338,6 +338,25 @@ const ja = {
   'search.resultsTitle': '「{{query}}」の検索結果（{{count}}件）',
   'search.noResults': '見つかりませんでした。別の言い方も試してみてください。',
   'search.likeMode': '簡易検索（2文字以下）',
+
+  // ---- 履歴（操作ログ・改訂履歴） ----
+  'history.heading': '履歴',
+  'history.audit': '操作の記録',
+  'history.revisions': '改訂履歴',
+  'history.before': '変更前',
+  'history.after': '変更後',
+  'history.reason': '理由',
+  'history.revNo': '第{{no}}版',
+  'history.fetchFailed': '取得できませんでした',
+  'history.empty': 'まだ記録がありません',
+  'history.action.pageCreate': 'ページを作成',
+  'history.action.pageUpdate': 'ページを編集',
+  'history.action.pageClose': '確定',
+  'history.action.pageReopen': '確定を取り消し',
+  'history.action.pageDelete': 'ページを削除',
+  'history.action.moleculesReplace': '反応テーブルを保存',
+  'history.action.attachmentCreate': '添付を追加',
+  'history.action.attachmentDelete': '添付を削除',
 } as const;
 
 export type MessageKey = keyof typeof ja;
@@ -677,6 +696,25 @@ const en: Record<MessageKey, string> = {
   'search.resultsTitle': 'Search results for "{{query}}" ({{count}})',
   'search.noResults': 'No results found. Try a different phrasing.',
   'search.likeMode': 'Simple search (2 characters or fewer)',
+
+  // ---- 履歴（操作ログ・改訂履歴） ----
+  'history.heading': 'History',
+  'history.audit': 'Activity log',
+  'history.revisions': 'Revision history',
+  'history.before': 'Before',
+  'history.after': 'After',
+  'history.reason': 'Reason',
+  'history.revNo': 'Revision {{no}}',
+  'history.fetchFailed': 'Could not load',
+  'history.empty': 'No records yet',
+  'history.action.pageCreate': 'Page created',
+  'history.action.pageUpdate': 'Page edited',
+  'history.action.pageClose': 'Finalized',
+  'history.action.pageReopen': 'Reopened',
+  'history.action.pageDelete': 'Page deleted',
+  'history.action.moleculesReplace': 'Reaction table saved',
+  'history.action.attachmentCreate': 'Attachment added',
+  'history.action.attachmentDelete': 'Attachment deleted',
 };
 
 const LOCALES: Record<Locale, Record<string, string>> = { ja, en };

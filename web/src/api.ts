@@ -114,6 +114,44 @@ export interface SearchResponse {
   results: SearchHit[];
 }
 
+// ---- 監査証跡（操作ログ）と改訂履歴 ----
+
+// 操作ログ（audit_events）の1行。新しい順（seq降順）で返る。
+// before_json / after_json はJSON文字列（無いときはnull）。本文そのものは入らず、
+// 本文の変更は content_sha256 / content_len の形で残る（実体は page_revisions が持つ）
+export interface AuditEvent {
+  id: string;
+  seq: number;
+  actor_user_id: string;
+  actor_email: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  page_id: string | null;
+  before_json: string | null;
+  after_json: string | null;
+  reason: string;
+  at: string;
+}
+
+// 改訂履歴（page_revisions）の一覧行。一覧にはスナップショット（本文）は載らない
+export interface PageRevision {
+  rev_no: number;
+  author_user_id: string;
+  created_at: string;
+}
+
+// 1版分のスナップショット。形は { page, molecules }。画面が読むのは page の3項目だけ
+export interface PageRevisionSnapshot {
+  page: {
+    title: string;
+    content: string;
+    experiment_date: string;
+    status: string;
+  };
+  molecules?: unknown[];
+}
+
 // ---- 台帳3種（試薬マスタ・試薬在庫・機器） ----
 
 // 試薬マスタ。研究室で使う試薬の「定義」。反応テーブルへ引き写す元になる
@@ -317,6 +355,28 @@ export const api = {
         molecules: molecules.map((m, i) => ({ ...m, is_reference: m.is_reference ? 1 : 0, sort_order: i })),
       }),
     }).then((r) => ({ molecules: r.molecules.map(toMolecule), rev_no: r.rev_no })),
+
+  // ---- 監査証跡・改訂履歴（読み取り専用。書き込みはサーバ側だけが行う） ----
+  // ページの操作ログ。新しい順（seq降順）。limit省略時はサーバ既定
+  listPageAudit: (pageId: string, limit?: number) =>
+    request<{ events: AuditEvent[] }>(
+      `/api/pages/${pageId}/audit${limit ? `?limit=${limit}` : ''}`
+    ),
+
+  listPageRevisions: (pageId: string) =>
+    request<{ revisions: PageRevision[] }>(`/api/pages/${pageId}/revisions`),
+
+  // snapshot は { page, molecules }。サーバはJSONを戻して返すが、
+  // 文字列で届いた場合もここで吸収してオブジェクトに揃える
+  getPageRevision: (pageId: string, revNo: number) =>
+    request<{ rev_no: number; snapshot: PageRevisionSnapshot | string }>(
+      `/api/pages/${pageId}/revisions/${revNo}`
+    ).then((r) => ({
+      rev_no: r.rev_no,
+      snapshot: typeof r.snapshot === 'string'
+        ? JSON.parse(r.snapshot) as PageRevisionSnapshot
+        : r.snapshot,
+    })),
 
   // ---- 添付ファイル ----
   listAttachments: (pageId: string) =>

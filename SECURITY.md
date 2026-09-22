@@ -70,7 +70,7 @@ Erlenは**利用者自身のCloudflareアカウントの中だけ**で動きま�
 - 権限の破れ（viewer が書ける、editor がメンバー管理をできる、など）
 - セッション・Googleログイン（IDトークン検証）の欠陥
 - 添付ファイルの取り違え・権限を無視した取得
-- 監査証跡（`page_revisions`）を残さずにページを書き換えられること
+- 監査証跡（操作ログ `audit_events`・改訂履歴 `page_revisions`）を残さずにページを書き換えられること
 
 ### 対象外
 
@@ -133,7 +133,8 @@ Cloudflare and Google accounts, the values you place with `wrangler secret put`,
 
 In scope for a report: tenant isolation failures, project visibility failures (`src/access.mjs`),
 role enforcement failures, defects in session handling or Google ID-token verification, attachments
-served to the wrong person, and any way to change a page without leaving a `page_revisions` entry.
+served to the wrong person, and any way to change a page without leaving an `audit_events`
+or `page_revisions` entry.
 
 Out of scope: your own misconfiguration, issues in Cloudflare or Google themselves, vulnerabilities
 in bundled third-party software (report those upstream — although "the bundled version is outdated

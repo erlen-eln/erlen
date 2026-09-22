@@ -38,8 +38,12 @@
 | **Googleログイン** | 招待制のマルチユーザー。owner / editor / viewer の3権限 |
 | **プロジェクト** | ノートブックを束ね、**閲覧できる人を絞る**。外した人には、そのノートブックが「無い」ように見える（一覧にも検索結果にも印刷レポートにも出ない）。プロジェクトに入れないノートブックは全員が見られる |
 | **複数オーナー** | オーナーは何人でも置ける。設置者（`OWNER_EMAIL` 本人）だけは降格も除名もできないので、管理者が居なくなることがない |
-| **監査証跡** | ページの改訂履歴（`page_revisions`）を自動記録。誰がいつ何を変えたかが残る |
+| **監査証跡** | 操作ログ（`audit_events`・追記専用・ハッシュ連鎖）と改訂履歴（`page_revisions`）の2本立てで自動記録 |
 | **日英UI** | 画面ヘッダの `JA` / `EN` で切替。印刷レポートも `?lang=en` で英語になる |
+
+- 誰が・いつ・何をしたかが、作成から削除まで全操作で残ります
+- 操作ログは1行ごとに直前の行のハッシュを含む連鎖になっていて、過去の行の書き換えを識別できます
+- `npm run verify-audit` で、その連鎖が壊れていないかを自分で検証できます
 
 **データは全部あなたのものです。** 提供者のサーバーを一切経由しません。
 記録はあなたのCloudflareアカウントのD1（データベース）とR2（ファイル置き場）にだけ置かれます。
@@ -218,8 +222,12 @@ in Japanese and English**. No extra containers, no extra services.
 | **Google sign-in** | Invitation-based multi-user with owner / editor / viewer roles |
 | **Projects** | Group notebooks and restrict who can see them. To everyone else the notebook simply does not exist — not in lists, not in search, not in reports. Notebooks outside any project stay visible to the whole tenant |
 | **Multiple owners** | Any number of owners; the installer (`OWNER_EMAIL`) can never be demoted or removed, so you cannot end up without an administrator |
-| **Audit trail** | Every page revision is recorded (`page_revisions`): who changed what, and when |
+| **Audit trail** | Two layers: an operation log (`audit_events`, append-only and hash-chained) and page revisions (`page_revisions`) |
 | **Bilingual UI** | `JA` / `EN` in the header; reports accept `?lang=en` |
+
+- Who did what, and when, is recorded for every operation
+- Each log row carries the hash of the previous row, so rewritten history can be identified
+- `npm run verify-audit` checks that the chain is intact
 
 **The data is yours.** Nothing passes through anyone else's server. Records live only in the D1
 database and R2 bucket of *your* Cloudflare account.

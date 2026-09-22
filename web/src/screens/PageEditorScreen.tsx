@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, type Page } from '../api.ts';
 import type { Molecule } from '../calc/types.ts';
 import { AttachmentPanel } from '../components/AttachmentPanel.tsx';
+import { HistoryPanel } from '../components/HistoryPanel.tsx';
 import { ReactionTable } from '../components/ReactionTable.tsx';
 import { SaveIndicator } from '../components/SaveIndicator.tsx';
 import { Modal } from '../components/Modal.tsx';
@@ -220,6 +221,9 @@ export function PageEditorScreen({ pageId, onBack }: Props) {
         <h2>{t('attachment.heading')}</h2>
         <AttachmentPanel pageId={page.id} readOnly={!!readOnly} />
       </section>
+
+      {/* 操作ログと改訂履歴。keyでページごとに作り直す（別ページの履歴が残らないように） */}
+      <HistoryPanel key={page.id} pageId={page.id} />
 
       <Modal
         open={confirmClose}

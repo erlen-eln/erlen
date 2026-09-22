@@ -31,7 +31,7 @@
 | サービス | 用途 | 無料枠の目安 |
 |---|---|---|
 | Workers | アプリ本体と画面の配信 | 10万リクエスト/日 |
-| D1 | 実験記録・試薬・在庫・機器・監査証跡 | 5GB・500万行読み取り/日 |
+| D1 | 実験記録・試薬・在庫・機器・操作ログ（`audit_events`）・改訂履歴（`page_revisions`） | 5GB・500万行読み取り/日 |
 | R2 | 添付ファイル（スペクトル画像・PDF等） | 10GB保存・下り無料 |
 
 **つまずいたら**: 「無料枠を超えないか」と聞かれたら、研究室1つ分（数人・数千ページ）なら
@@ -159,8 +159,9 @@ npm exec -- wrangler r2 bucket create erlen-attachments
 npm exec -- wrangler d1 migrations apply erlen --remote
 ```
 
-`migrations/` の `.sql` を番号順に本番D1へ流します（実験ノート・分子・添付・監査証跡・
-メンバー・試薬・在庫・機器のテーブルが作られます）。
+`migrations/` の `.sql` を番号順に本番D1へ流します（実験ノート・分子・添付・
+メンバー・試薬・在庫・機器に加え、操作ログ `audit_events` と改訂履歴 `page_revisions`
+のテーブルが作られます）。
 
 - **`--remote` を必ず付ける**。付けないとローカルの `.wrangler/` の中の仮DBに当たり、本番は空のまま
 - 適用済みのものは自動でスキップされる（何度実行しても安全）
@@ -444,7 +445,7 @@ npm run doctor:remote
 研究記録は取り返しがつきません。**運用に載せる前に、1回はバックアップを取って手順を確かめること。**
 
 ```bash
-# D1（実験記録・試薬・在庫・機器・監査証跡）
+# D1（実験記録・試薬・在庫・機器・操作ログ audit_events・改訂履歴 page_revisions）
 npm exec -- wrangler d1 export erlen --remote --output backups/erlen-YYYYMMDD.sql
 
 # 添付ファイル（R2）は、D1のattachmentsテーブルのr2_keyが台帳

@@ -12,19 +12,19 @@ being considered next. Priorities follow what people actually ask for in the iss
 ## いまの土台 / Where it stands
 
 **v1.3.x を安定版の基点とします。** 実験ノート・構造式・反応の自動計算・添付・全文検索・
-印刷レポート・試薬／在庫／機器の台帳・招待制のメンバー管理・監査証跡・日英UIまでが揃っていて、
-これらは**すでに研究室で使える完成した機能**です。ここから先の変更は、
+印刷レポート・試薬／在庫／機器の台帳・招待制のメンバー管理・監査証跡（操作ログと改訂履歴）・
+日英UIまでが揃っていて、これらは**すでに研究室で使える完成した機能**です。ここから先の変更は、
 この土台を壊さないことを前提に積みます。
 
 *v1.3.x is the stable base. The notebook, structures, stoichiometry, attachments, search, printable
-reports, the reagent / stock / equipment ledgers, invitation-based membership, the audit trail and
-the bilingual interface are done and usable. Everything after this is added on top without
-disturbing that base.*
+reports, the reagent / stock / equipment ledgers, invitation-based membership, the audit trail
+(an operation log and page revisions) and the bilingual interface are done and usable.
+Everything after this is added on top without disturbing that base.*
 
 変わらない前提 / What will not change:
 
 - **追加のサーバー・追加の常時課金サービスを増やさない。** 1つのデプロイで完結させる
-- **記録を消さない。** 改訂履歴と削除済み行は残す（[AI_CONSTITUTION.md](AI_CONSTITUTION.md)）
+- **記録を消さない。** 操作ログ・改訂履歴・削除済み行は残す（[AI_CONSTITUTION.md](AI_CONSTITUTION.md)）
 - **データは利用者のアカウントの中だけに置く。** 提供者のサーバーを経由させない
 - **`migrations/` は追記のみ。** 既存の導入者の環境を壊す変更をしない
 
