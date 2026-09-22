@@ -46,8 +46,18 @@ summary_en: Official sources referenced in this lab. Every link was fetched and 
 | 同 質疑応答集（Q&A・2010年10月21日 事務連絡） | [全文HTML（厚労省）](https://www.mhlw.go.jp/web/t_doc?dataId=00tb6574&dataType=1&pageNo=1) | 実務ではほぼ必ず併読される |
 | **GMP 省令**（医薬品及び医薬部外品の製造管理及び品質管理の基準に関する省令・平成16年厚労省令第179号） | [e-Gov 法令検索](https://laws.e-gov.go.jp/law/416M60000100179) | 現行版は2026年5月1日施行の改正を反映 |
 | **GLP 省令**（医薬品の安全性に関する非臨床試験の実施の基準に関する省令・平成9年厚生省令第21号） | [e-Gov 法令検索](https://laws.e-gov.go.jp/law/409M50000100021) | 同上 |
+| **GMP 事例集（2022年版）** | [PDF（PMDA）](https://www.pmda.go.jp/files/000246306.pdf) ／ [全文HTML（厚労省）](https://www.mhlw.go.jp/web/t_doc?dataId=00tc6732&dataType=1) | 全176ページ。**監査証跡が出てくるのは GMP8-18 の1箇所だけ**。ALCOA+ の日本語の定訳とデータライフサイクルの定義がある |
+| GMP 事例集（2022年版）**追補**（2024年4月10日 事務連絡） | [全文HTML（厚労省）](https://www.mhlw.go.jp/web/t_doc?dataId=00tc8501&dataType=1&pageNo=1) | 電子化しても手書き等のオリジナルは原則保管、ほか |
 | GMP 適合性調査業務（GMP 関連通知の一覧） | [PMDA](https://www.pmda.go.jp/review-services/gmp-qms-gctp/gmp/0001.html) | GMP 省令・調査要領・PIC/S 関連の事務連絡 |
 | QMS 適合性調査業務 | [PMDA](https://www.pmda.go.jp/review-services/gmp-qms-gctp/qms/0003.html) | 医療機器・体外診断薬 |
+| PMDA「データインテグリティについての期待値」（2024年2月） | [PDF](https://www.pmda.go.jp/files/000269074.pdf) | PMDA 担当者の講演資料（**演者の個人的見解との但し書きあり**）。GMP省令公布通知が PI 041 を参照先に指定していることに触れている |
+| PMDA「改正GMP省令について −最近の指導事例を中心に−」（2022年9月） | [PDF（日本製薬工業協会サイト）](https://www.jpma.or.jp/information/quality/jirei/gbkspa00000017ws-att/2022_1.pdf) | **データインテグリティの指摘事例**（削除の理由と妥当性が確認できなかった等）。同じく講演資料 |
+
+### 日本語で読める実務の手引き
+
+| 文書 | リンク | 中身 |
+|---|---|---|
+| **日本PDA製薬学会「データインテグリティに関する規制対応の実践」**（PDA Journal of GMP and Validation in Japan, Vol.24, No.1, 2022） | [論文ページ（J-STAGE）](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_article/-char/ja) ／ [PDF](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_pdf/-char/ja) | **オープンアクセス。**「誰が・どの頻度で監査証跡をレビューするか」に日本語で答えている唯一の実務文書。**付録に「監査証跡レビュー実践ガイド」**（論文ページの「電子付録」から） |
 
 厚労省の法令等データベースのリンクは、**クエリ（`&dataType=1&pageNo=1`）まで含めないと開きません**。
 また同データベースは通知番号を正規化して表示するため、原本の表記（薬食発第0401022号）と
