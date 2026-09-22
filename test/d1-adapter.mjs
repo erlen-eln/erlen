@@ -101,7 +101,7 @@ export function addMember(env, { id, email, name = '', role = 'editor', tenantId
 export const TENANT_TABLES = [
   'notebooks', 'pages', 'molecules', 'attachments', 'page_revisions', 'invitations',
   'reagent_masters', 'reagent_stocks', 'equipments', 'projects', 'project_members',
-  'audit_events',
+  'audit_events', 'compliance_policies', 'reason_codes',
 ];
 
 // 記録したSQLのうち、テナント別テーブルを触るものに tenant_id 条件が無いものを返す

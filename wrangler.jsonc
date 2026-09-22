@@ -41,7 +41,11 @@
     // デモモード。"1" にすると、招待していない人のGoogleログインを
     // 「閲覧専用（viewer）」として通す（公開デモ用）。あなたのノートは既定の "0" のままにする。
     // "1" のあいだは、ログインできた誰もが全データを閲覧できる（書き込みはサーバが403で断る）
-    "DEMO_MODE": "0"
+    "DEMO_MODE": "0",
+    // 規制対応モード。"1" にすると方針（compliance policy）の管理と
+    // プロジェクトへの割り当てが有効になる（/api/policies・/api/reason-codes・
+    // PUT /api/projects/:id/policy）。あなたのノートは既定の "0" のままにする
+    "COMPLIANCE_MODE": "0"
   }
   // secrets（`npm exec -- wrangler secret put <名前>` で入れる。値はここに書かない）:
   //   GOOGLE_CLIENT_ID     … Google Cloud ConsoleのOAuthクライアントID

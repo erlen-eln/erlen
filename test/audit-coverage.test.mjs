@@ -20,6 +20,10 @@ import { createEquipment, bulkCreateEquipments, patchEquipment, deleteEquipment 
 import { createPage, patchPage, deletePage } from '../src/api/pages.mjs';
 import { saveMolecules } from '../src/api/molecules.mjs';
 import { resolveLogin } from '../src/session.mjs';
+import {
+  createPolicy, patchPolicy, deletePolicy, putProjectPolicy,
+  createReasonCode, patchReasonCode, deleteReasonCode,
+} from '../src/api/policies.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const API_DIR = path.join(ROOT, 'src', 'api');
@@ -148,4 +152,44 @@ test('主要な書き込みAPIは1回の呼び出しで監査がちょうど1件
     () => patchEquipment(env, ctx, eq.data.equipment.id, { notes: '定期点検済み' }));
   await expectOneMore(DB, 'equipment.delete',
     () => deleteEquipment(env, ctx, eq.data.equipment.id));
+});
+
+test('規制まわりの書き込みAPIも1回の呼び出しで監査がちょうど1件増える（COMPLIANCE_MODE="1"）', async () => {
+  const { env, ctx, DB } = createTestEnv();
+  env.COMPLIANCE_MODE = '1';
+  const NOW = '2026-07-11T00:00:00.000Z';
+
+  // ---- 方針（compliance_policies） ----
+  const pol = await expectOneMore(DB, 'policy.create',
+    () => createPolicy(env, ctx, { name: '方針A' }, NOW));
+  const polId = pol.data.policy.id;
+  await expectOneMore(DB, 'policy.update',
+    () => patchPolicy(env, ctx, polId, { require_reason: true }, NOW));
+  const pol2 = await expectOneMore(DB, 'policy.create(2)',
+    () => createPolicy(env, ctx, { name: '方針B' }, NOW));
+  // 既定を立てる変更は専用の action で記録する（既定の移動は追跡したい操作）
+  await expectOneMore(DB, 'policy.set_tenant_default',
+    () => patchPolicy(env, ctx, pol2.data.policy.id, { is_tenant_default: true }, NOW));
+
+  // ---- プロジェクトへの割り当て ----
+  const pj = await expectOneMore(DB, 'project.create',
+    () => createProject(env, ctx, { name: '案件C' }));
+  const pjId = pj.data.project.id;
+  await expectOneMore(DB, 'project.policy_assign',
+    () => putProjectPolicy(env, ctx, pjId, { policy_id: polId }, NOW));
+  await expectOneMore(DB, 'project.policy_assign(解除)',
+    () => putProjectPolicy(env, ctx, pjId, { policy_id: null }, NOW));
+
+  // ---- 削除（割り当てを外してから） ----
+  await expectOneMore(DB, 'policy.delete',
+    () => deletePolicy(env, ctx, polId, NOW));
+
+  // ---- 理由コード（reason_codes） ----
+  const rc = await expectOneMore(DB, 'reason_code.create',
+    () => createReasonCode(env, ctx, { code: 'FIX', label_ja: '修正' }, NOW));
+  const rcId = rc.data.reason_code.id;
+  await expectOneMore(DB, 'reason_code.update',
+    () => patchReasonCode(env, ctx, rcId, { label_ja: '修正（再）' }, NOW));
+  await expectOneMore(DB, 'reason_code.delete',
+    () => deleteReasonCode(env, ctx, rcId, NOW));
 });

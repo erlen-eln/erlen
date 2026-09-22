@@ -10,6 +10,11 @@ import {
 } from './auth.mjs';
 import { loadContext, ownerTenantId, resolveLogin } from './session.mjs';
 import { actorOf, recordAudit } from './audit.mjs';
+import { complianceOn } from './compliance.mjs';
+import {
+  createPolicy, deletePolicy, listPolicies, patchPolicy, putProjectPolicy,
+  createReasonCode, deleteReasonCode, listReasonCodes, patchReasonCode,
+} from './api/policies.mjs';
 import { exportAuditEvents, listAuditEvents, listPageAudit } from './api/audit.mjs';
 import { getPageRevision, listPageRevisions } from './api/revisions.mjs';
 import { health } from './api/health.mjs';
@@ -339,6 +344,16 @@ async function handleApi(request, env, url, seg, ctx) {
   if (seg[1] === 'projects') {
     if (seg.length === 2 && method === 'GET') return await listProjects(env, ctx);
     if (seg.length === 3 && method === 'GET') return await getProject(env, ctx, seg[2]);
+    // 規制方針の割り当ては COMPLIANCE_MODE="1" のときだけ存在するルート。
+    // 機能が無いときは誰が叩いても 404（オーナー判定の前に置く）
+    if (seg.length === 4 && seg[3] === 'policy') {
+      if (!complianceOn(env)) return { status: 404, data: { error: 'not_found' } };
+      if (ctx.role !== 'owner') return { status: 403, data: { error: 'forbidden' } };
+      if (method !== 'PUT') return { status: 405, data: { error: 'method_not_allowed' } };
+      const parsed = await readJson(request);
+      if (!parsed.ok) return { status: 400, data: { error: 'bad_json' } };
+      return await putProjectPolicy(env, ctx, seg[2], parsed.body);
+    }
     if (ctx.role !== 'owner') return { status: 403, data: { error: 'forbidden' } };
 
     if (seg.length === 2 && method === 'POST') {
@@ -358,6 +373,52 @@ async function handleApi(request, env, url, seg, ctx) {
       if (!parsed.ok) return { status: 400, data: { error: 'bad_json' } };
       return await putProjectMembers(env, ctx, seg[2], parsed.body);
     }
+    return { status: 405, data: { error: 'method_not_allowed' } };
+  }
+
+  // ---- 規制対応（方針・理由コード） --------------------------------------
+  // COMPLIANCE_MODE="1" のときだけ存在する機能。それ以外は全て 404（機能が無い扱い）。
+  // 例外: GET /api/reason-codes だけは空配列を返す（画面が選択肢を引いても壊れないように）
+  if (seg[1] === 'policies' || seg[1] === 'reason-codes') {
+    if (!complianceOn(env)) {
+      if (seg[1] === 'reason-codes' && seg.length === 2 && method === 'GET') {
+        return await listReasonCodes(env, ctx);
+      }
+      return { status: 404, data: { error: 'not_found' } };
+    }
+    if (seg[1] === 'policies') {
+      // 方針の一覧・作成・変更・削除はすべてオーナー専用
+      if (ctx.role !== 'owner') return { status: 403, data: { error: 'forbidden' } };
+      if (seg.length === 2 && method === 'GET') return await listPolicies(env, ctx);
+      if (seg.length === 2 && method === 'POST') {
+        const parsed = await readJson(request);
+        if (!parsed.ok) return { status: 400, data: { error: 'bad_json' } };
+        return await createPolicy(env, ctx, parsed.body);
+      }
+      if (seg.length === 3 && method === 'PATCH') {
+        const parsed = await readJson(request);
+        if (!parsed.ok) return { status: 400, data: { error: 'bad_json' } };
+        return await patchPolicy(env, ctx, seg[2], parsed.body);
+      }
+      if (seg.length === 3 && method === 'DELETE') return await deletePolicy(env, ctx, seg[2]);
+      return { status: 405, data: { error: 'method_not_allowed' } };
+    }
+    // 理由コード: 一覧の閲覧はログイン中なら誰でも、登録・変更・削除はオーナーだけ
+    if (seg.length === 2 && method === 'GET') return await listReasonCodes(env, ctx);
+    const rcWrite = (seg.length === 2 && method === 'POST')
+      || (seg.length === 3 && (method === 'PATCH' || method === 'DELETE'));
+    if (rcWrite && ctx.role !== 'owner') return { status: 403, data: { error: 'forbidden' } };
+    if (seg.length === 2 && method === 'POST') {
+      const parsed = await readJson(request);
+      if (!parsed.ok) return { status: 400, data: { error: 'bad_json' } };
+      return await createReasonCode(env, ctx, parsed.body);
+    }
+    if (seg.length === 3 && method === 'PATCH') {
+      const parsed = await readJson(request);
+      if (!parsed.ok) return { status: 400, data: { error: 'bad_json' } };
+      return await patchReasonCode(env, ctx, seg[2], parsed.body);
+    }
+    if (seg.length === 3 && method === 'DELETE') return await deleteReasonCode(env, ctx, seg[2]);
     return { status: 405, data: { error: 'method_not_allowed' } };
   }
 

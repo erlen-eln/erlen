@@ -17,6 +17,7 @@ function srcFiles() {
     path.join(ROOT, 'src/worker.mjs'),
     path.join(ROOT, 'src/audit.mjs'),
     path.join(ROOT, 'src/revisions.mjs'),
+    path.join(ROOT, 'src/compliance.mjs'),
   ];
   for (const f of readdirSync(path.join(ROOT, 'src/api'))) {
     if (f.endsWith('.mjs')) out.push(path.join(ROOT, 'src/api', f));

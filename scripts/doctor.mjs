@@ -75,6 +75,11 @@ if (config) {
       + '（書き込みは403で断ります）。自分のノートとして使うなら "0" に戻してください');
   }
 
+  // ③c 規制対応モード（同上。"1" のときだけ注意を1行出す）
+  if (String(vars.COMPLIANCE_MODE ?? '') === '1') {
+    warn('COMPLIANCE_MODE="1" です。プロジェクトに方針を割り当てると、変更理由の入力などが要求されます');
+  }
+
   // ④ バインディング
   const db = config.d1_databases?.find((x) => x.binding === 'DB');
   if (!db?.database_id) fail('D1のDBバインディングとdatabase_idが必要です');
