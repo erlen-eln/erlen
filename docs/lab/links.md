@@ -57,7 +57,10 @@ summary_en: Official sources referenced in this lab. Every link was fetched and 
 
 | 文書 | リンク | 中身 |
 |---|---|---|
-| **日本PDA製薬学会「データインテグリティに関する規制対応の実践」**（PDA Journal of GMP and Validation in Japan, Vol.24, No.1, 2022） | [論文ページ（J-STAGE）](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_article/-char/ja) ／ [PDF](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_pdf/-char/ja) | **オープンアクセス。**「誰が・どの頻度で監査証跡をレビューするか」に日本語で答えている唯一の実務文書。**付録に「監査証跡レビュー実践ガイド」**（論文ページの「電子付録」から） |
+| **日本PDA製薬学会「データインテグリティに関する規制対応の実践」**（PDA Journal of GMP and Validation in Japan, Vol.24, No.1, 2022） | [論文ページ（J-STAGE）](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_article/-char/ja) ／ [本文PDF](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_pdf/-char/ja) | **オープンアクセス。**「誰が・どの頻度で監査証跡をレビューするか」に日本語で答えている実務文書 |
+| └ 電子付録1 **時刻合わせ実践ガイド** | [PDF](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_supplement/_download/24_10_1.pdf) | 時刻同期の実務 |
+| └ 電子付録2 **ハイブリッド運用実践ガイド** | [PDF](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_supplement/_download/24_10_2.pdf) | 紙と電子が混在する運用 |
+| └ 電子付録3 **監査証跡レビュー実践ガイド**（全18ページ・2021年12月） | [PDF](https://www.jstage.jst.go.jp/article/pda/24/1/24_10/_supplement/_download/24_10_3.pdf) | **本命。** 対象範囲・リスクアセスメント・実施方法・実施者の要件と教育・委託先・バックアップ・実務アンケート |
 
 厚労省の法令等データベースのリンクは、**クエリ（`&dataType=1&pageNo=1`）まで含めないと開きません**。
 また同データベースは通知番号を正規化して表示するため、原本の表記（薬食発第0401022号）と
